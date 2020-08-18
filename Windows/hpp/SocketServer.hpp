@@ -8,7 +8,7 @@
 */
 
 #pragma once
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define m_WINSOCK_DEPRECATED_NO_WARNINGS
 #include <string>
 using namespace std;
 
@@ -23,16 +23,16 @@ namespace MySocketLib {
 		unsigned short const PORT = 27015;
 		static int constexpr MAX_CHARS = 256;
 
-		char* _ip_address = "127.0.0.1";
+		const char* m_ip_address = "127.0.0.1";
 
-		SOCKET _hSocket;
-		SOCKET _hAccepted;
-		sockaddr_in _serverAddress;
+		SOCKET m_hSocket;
+		SOCKET m_hAccepted;
+		sockaddr_in m_serverAddress;
 
-		bool _running = false;
-		bool _open = false;
-		bool _connected = false;
-		string _status = "";
+		bool m_running = false;
+		bool m_open = false;
+		bool m_connected = false;
+		string m_status = "";
 
 		bool init();
 		bool bind_socket();
@@ -41,7 +41,7 @@ namespace MySocketLib {
 
 	public:
 		SocketServer() {}
-		SocketServer(char* ip) : _ip_address(ip) {}
+		SocketServer(const char* ip) : m_ip_address(ip) {}
 
 		~SocketServer() {
 			disconnect_client();
@@ -56,9 +56,9 @@ namespace MySocketLib {
 		string receive_text();
 		void send_text(string const& text);
 
-		string status() { return _status; }
-		bool running() { return _running; }
-		bool connected() { return _connected; }
+		string status() { return m_status; }
+		bool running() { return m_running; }
+		bool connected() { return m_connected; }
 	};
 
 }

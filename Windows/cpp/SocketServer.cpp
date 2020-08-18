@@ -7,10 +7,10 @@
 *       File: SocketServer.cpp
 */
 
-#include<SocketServer.hpp>
-#include<vector>
-#include<sstream>
-#include<cassert>
+#include "../hpp/SocketServer.hpp"
+#include <vector>
+#include <sstream>
+#include <cassert>
 
 namespace MySocketLib {
 
@@ -25,21 +25,21 @@ namespace MySocketLib {
 		WSAData wsaData;
 		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (iResult != 0) {
-			_status = "Server WSAStartup failed : " + iResult;
+			m_status = "Server WSAStartup failed : " + iResult;
 			return false;
 		}
 
 		// Create the TCP socket
-		_hSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		_open = true;
+		m_hSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		m_open = true;
 
 		// Create the server address
-		_serverAddress = { 0 };
-		_serverAddress.sin_family = AF_INET;
-		_serverAddress.sin_port = htons(PORT);
-		_serverAddress.sin_addr.s_addr = inet_addr(_ip_address);
+		m_serverAddress = { 0 };
+		m_serverAddress.sin_family = AF_INET;
+		m_serverAddress.sin_port = htons(PORT);
+		m_serverAddress.sin_addr.s_addr = inet_addr(m_ip_address);
 
-		_status = "Server Initialized";
+		m_status = "Server Initialized";
 		return true;
 	}
 
@@ -52,9 +52,9 @@ namespace MySocketLib {
 	bool SocketServer::bind_socket() {
 
 		// bind the socket
-		if (bind(_hSocket, (SOCKADDR*)&_serverAddress, sizeof(_serverAddress)) == SOCKET_ERROR) {
+		if (bind(m_hSocket, (SOCKADDR*)&m_serverAddress, sizeof(m_serverAddress)) == SOCKET_ERROR) {
 			close();
-			_status = "Server bind() failed.";
+			m_status = "Server bind() failed.";
 			return false;
 		}
 
@@ -69,14 +69,14 @@ namespace MySocketLib {
 	*/
 	bool SocketServer::listen_socket() {
 
-		_running = false;
-		if (listen(_hSocket, 1) == SOCKET_ERROR) {
+		m_running = false;
+		if (listen(m_hSocket, 1) == SOCKET_ERROR) {
 			close();
-			_status = "Server error listening on socket";
+			m_status = "Server error listening on socket";
 			return false;
 		}
 
-		_status = "Server started";
+		m_status = "Server started";
 
 		return true;
 	}
@@ -88,21 +88,21 @@ namespace MySocketLib {
 	* Postconditions: Returns true if successful
 	*/
 	bool SocketServer::connect_client() {
-		if (!_running) {
-			_status = "Server cannot connect, server not running";
+		if (!m_running) {
+			m_status = "Server cannot connect, server not running";
 			return false;
 		}
 
-		_status = "Server waiting for client";
+		m_status = "Server waiting for client";
 
-		_connected = false;
-		_hAccepted = SOCKET_ERROR;
-		while (_hAccepted == SOCKET_ERROR) {
-			_hAccepted = accept(_hSocket, NULL, NULL);
+		m_connected = false;
+		m_hAccepted = SOCKET_ERROR;
+		while (m_hAccepted == SOCKET_ERROR) {
+			m_hAccepted = accept(m_hSocket, NULL, NULL);
 		}
 
-		_status = "Server connected to client";
-		_connected = true;
+		m_status = "Server connected to client";
+		m_connected = true;
 
 		return true;
 	}
@@ -130,7 +130,7 @@ namespace MySocketLib {
 		if (!result)
 			return;
 
-		_running = true;
+		m_running = true;
 	}
 
 	/*
@@ -142,9 +142,9 @@ namespace MySocketLib {
 	void SocketServer::stop() {
 		disconnect_client();
 
-		_running = false;
+		m_running = false;
 		close();
-		_status = "Server stopped";
+		m_status = "Server stopped";
 	}
 
 	/*
@@ -154,10 +154,10 @@ namespace MySocketLib {
 	* Postconditions: Resources cleaned up.  Able to reconnect.
 	*/
 	void SocketServer::close() {
-		if (_open) {
-			closesocket(_hSocket);
+		if (m_open) {
+			closesocket(m_hSocket);
 			WSACleanup();
-			_open = false;
+			m_open = false;
 		}
 	}
 
@@ -168,9 +168,9 @@ namespace MySocketLib {
 	* Postconditions: Client disconnected but still running.
 	*/
 	void SocketServer::disconnect_client() {
-		if (_connected) {
-			closesocket(_hAccepted);
-			_connected = false;
+		if (m_connected) {
+			closesocket(m_hAccepted);
+			m_connected = false;
 		}
 	}
 
@@ -181,15 +181,15 @@ namespace MySocketLib {
 	* Postconditions: Returns the message when received
 	*/
 	string SocketServer::receive_text() {
-		assert(_running);
-		assert(_connected);
+		assert(m_running);
+		assert(m_connected);
 
 		char recvbuf[MAX_CHARS] = "";
 		bool waiting = true;
 		ostringstream oss;
 
 		while (waiting) {
-			int bytesRecv = recv(_hAccepted, recvbuf, MAX_CHARS, 0);
+			int bytesRecv = recv(m_hAccepted, recvbuf, MAX_CHARS, 0);
 			if (bytesRecv > 0) {
 				waiting = false;
 				oss << recvbuf;
@@ -206,14 +206,14 @@ namespace MySocketLib {
 	* Postconditions: Message is sent
 	*/
 	void SocketServer::send_text(string const& text) {
-		assert(_running);
-		assert(_connected);
-		if (!_running || !_connected)
+		assert(m_running);
+		assert(m_connected);
+		if (!m_running || !m_connected)
 			return;
 
 		vector<char> data(text.begin(), text.end());
 
-		int bytesSent = send(_hAccepted, data.data(), static_cast<int>(data.size()), 0);
+		int bytesSent = send(m_hAccepted, data.data(), static_cast<int>(data.size()), 0);
 	}
 
 }

@@ -7,14 +7,14 @@
 *       File: launcher_main.cpp
 */
 
-#include<conio.h>
-#include<iostream>
-#include<thread>
-#include<algorithm>
-#include<mutex>
-#include<cassert>
-#include<SocketServer.hpp>
-#include<SocketClient.hpp>
+#include <conio.h>
+#include <iostream>
+#include <thread>
+#include <algorithm>
+#include <mutex>
+#include <cassert>
+#include "../hpp/SocketServer.hpp"
+#include "../hpp/SocketClient.hpp"
 
 namespace msl = MySocketLib;
 

@@ -7,10 +7,10 @@
 *       File: SocketClient.cpp
 */
 
-#include<SocketClient.hpp>
-#include<vector>
-#include<sstream>
-#include<cassert>
+#include "../hpp/SocketClient.hpp"
+#include <vector>
+#include <sstream>
+#include <cassert>
 
 namespace MySocketLib {
 
@@ -25,22 +25,22 @@ namespace MySocketLib {
 		WSAData wsaData;
 		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (iResult != 0) {
-			_status = "Client WSAStartup failed: " + iResult;
+			m_status = "Client WSAStartup failed: " + iResult;
 			return false;
 		}
 
 		// Create the TCP socket
-		_hSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);		
+		m_hSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);		
 
 		// Create the server address
-		_serverAddress = { 0 };
-		_serverAddress.sin_family = AF_INET;
-		_serverAddress.sin_port = htons(PORT);
-		_serverAddress.sin_addr.s_addr = inet_addr(_ip_address);
+		m_serverAddress = { 0 };
+		m_serverAddress.sin_family = AF_INET;
+		m_serverAddress.sin_port = htons(PORT);
+		m_serverAddress.sin_addr.s_addr = inet_addr(m_ip_address);
 
-		_open = true;
+		m_open = true;
 
-		_status = "Client Initialized";
+		m_status = "Client Initialized";
 		return true;
 	}
 
@@ -51,12 +51,12 @@ namespace MySocketLib {
 	* Postconditions: Resources cleaned up.  Able to reconnect.
 	*/
 	void SocketClient::close() {
-		if (!_open)
+		if (!m_open)
 			return;
 
-		closesocket(_hSocket);
+		closesocket(m_hSocket);
 		WSACleanup();
-		_open = false;
+		m_open = false;
 	}
 
 	/*
@@ -67,14 +67,14 @@ namespace MySocketLib {
 	*/
 	bool SocketClient::connect_socket() {
 
-		if (!_open) {
-			_status = "Client not initialized.";
+		if (!m_open) {
+			m_status = "Client not initialized.";
 			return false;
 		}
 
 		// connect the socket
-		if (connect(_hSocket, (SOCKADDR*)&_serverAddress, sizeof(_serverAddress)) == SOCKET_ERROR) {
-			_status = "Client Connect() failed";
+		if (connect(m_hSocket, (SOCKADDR*)&m_serverAddress, sizeof(m_serverAddress)) == SOCKET_ERROR) {
+			m_status = "Client Connect() failed";
 			close();
 			return false;
 		}
@@ -97,8 +97,8 @@ namespace MySocketLib {
 			return;
 		}
 
-		_running = true;
-		_status = "Client started";
+		m_running = true;
+		m_status = "Client started";
 	}
 
 	/*
@@ -108,9 +108,9 @@ namespace MySocketLib {
 	* Postconditions: Client is stopped and can be restarted
 	*/
 	void SocketClient::stop() {
-		_running = false;
+		m_running = false;
 		close();
-		_status = "Client stopped";
+		m_status = "Client stopped";
 	}
 
 	/*
@@ -120,13 +120,13 @@ namespace MySocketLib {
 	* Postconditions: Message is sent
 	*/
 	void SocketClient::send_text(string const& text) {
-		assert(_running);
-		if (!_running)
+		assert(m_running);
+		if (!m_running)
 			return;
 
 		vector<char> data(text.begin(), text.end());
 
-		int bytesSent = send(_hSocket, data.data(), static_cast<int>(data.size()), 0);
+		int bytesSent = send(m_hSocket, data.data(), static_cast<int>(data.size()), 0);
 	}
 
 	/*
@@ -136,14 +136,14 @@ namespace MySocketLib {
 	* Postconditions: Returns the message when received
 	*/
 	string SocketClient::receive_text() {
-		assert(_running);
+		assert(m_running);
 
 		char recvbuf[MAX_CHARS] = "";
 		bool waiting = true;
 		ostringstream oss;
 
 		while (waiting) {
-			int bytesRecv = recv(_hSocket, recvbuf, MAX_CHARS, 0);
+			int bytesRecv = recv(m_hSocket, recvbuf, MAX_CHARS, 0);
 			if (bytesRecv > 0) {
 				waiting = false;
 				oss << recvbuf;
