@@ -1,21 +1,13 @@
-/*
-*    Authors: Adam Lafontaine, Yougui Chen
-*     Course: INFO 5104
-* Assignment: Project 3, Socket Library
-*       Date: January 9, 2018
-*
-*       File: SocketServer.hpp
-*/
-
 #pragma once
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#include <string>
 #include <WinSock2.h>
 #pragma comment (lib,"ws2_32.lib")
 
-namespace MySocketLib {
+#include <string>
 
+namespace MySocketLib
+{
 	// Class encapsulating WinSock server functionality
 	class SocketServer {
 	private:
@@ -24,9 +16,9 @@ namespace MySocketLib {
 
 		const char* m_ip_address = "127.0.0.1";
 
-		SOCKET m_hSocket;
-		SOCKET m_hAccepted;
-		sockaddr_in m_serverAddress;
+		SOCKET m_hSocket = NULL;
+		SOCKET m_hAccepted = NULL;
+		sockaddr_in m_serverAddress = { 0 };
 
 		bool m_running = false;
 		bool m_open = false;
@@ -42,7 +34,8 @@ namespace MySocketLib {
 		SocketServer() {}
 		SocketServer(const char* ip) : m_ip_address(ip) {}
 
-		~SocketServer() {
+		~SocketServer()
+		{
 			disconnect_client();
 			close();
 		}

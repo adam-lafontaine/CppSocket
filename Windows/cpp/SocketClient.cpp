@@ -1,18 +1,11 @@
-/*
-*    Authors: Adam Lafontaine, Yougui Chen
-*     Course: INFO 5104
-* Assignment: Project 3, Socket Library
-*       Date: January 9, 2018
-*
-*       File: SocketClient.cpp
-*/
-
 #include "../hpp/SocketClient.hpp"
+
 #include <vector>
 #include <sstream>
 #include <cassert>
 
-namespace MySocketLib {
+namespace MySocketLib
+{
 
 	/*
 	*        Purpose: Initializes WSA, TCP socket and the server address
@@ -20,7 +13,8 @@ namespace MySocketLib {
 	*  Preconditions: None
 	* Postconditions: Returns false if a problem occured during initialization
 	*/
-	bool SocketClient::init() {
+	bool SocketClient::init()
+	{
 		// initialize WSA
 		WSAData wsaData;
 		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -50,7 +44,8 @@ namespace MySocketLib {
 	*  Preconditions: None
 	* Postconditions: Resources cleaned up.  Able to reconnect.
 	*/
-	void SocketClient::close() {
+	void SocketClient::close()
+	{
 		if (!m_open)
 			return;
 
@@ -65,8 +60,8 @@ namespace MySocketLib {
 	*  Preconditions: Client has been initialized
 	* Postconditions: Returns true if successful, false if not
 	*/
-	bool SocketClient::connect_socket() {
-
+	bool SocketClient::connect_socket()
+	{
 		if (!m_open) {
 			m_status = "Client not initialized.";
 			return false;
@@ -88,7 +83,8 @@ namespace MySocketLib {
 	*  Preconditions: None
 	* Postconditions: Client is running if successful
 	*/
-	void SocketClient::start() {
+	void SocketClient::start()
+	{
 		if (!init()) {			
 			return;
 		}
@@ -107,7 +103,8 @@ namespace MySocketLib {
 	*  Preconditions: None
 	* Postconditions: Client is stopped and can be restarted
 	*/
-	void SocketClient::stop() {
+	void SocketClient::stop()
+	{
 		m_running = false;
 		close();
 		m_status = "Client stopped";
@@ -119,7 +116,8 @@ namespace MySocketLib {
 	*  Preconditions: Client is running and connected to server
 	* Postconditions: Message is sent
 	*/
-	void SocketClient::send_text(std::string const& text) {
+	void SocketClient::send_text(std::string const& text)
+	{
 		assert(m_running);
 		if (!m_running)
 			return;
@@ -135,7 +133,8 @@ namespace MySocketLib {
 	*  Preconditions: Client is running and connected to server
 	* Postconditions: Returns the message when received
 	*/
-	std::string SocketClient::receive_text() {
+	std::string SocketClient::receive_text()
+	{
 		assert(m_running);
 
 		char recvbuf[MAX_CHARS] = "";

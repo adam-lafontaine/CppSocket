@@ -1,11 +1,5 @@
-/*
-*    Authors: Adam Lafontaine, Yougui Chen 
-*     Course: INFO 5104
-* Assignment: Project 3, Socket Library
-*       Date: January 9, 2018
-*
-*       File: launcher_main.cpp
-*/
+#include "../hpp/SocketServer.hpp"
+#include "../hpp/SocketClient.hpp"
 
 #include <conio.h>
 #include <iostream>
@@ -13,8 +7,6 @@
 #include <algorithm>
 #include <mutex>
 #include <cassert>
-#include "../hpp/SocketServer.hpp"
-#include "../hpp/SocketClient.hpp"
 
 namespace msl = MySocketLib;
 
@@ -29,7 +21,8 @@ bool client_running = false;
 *  Preconditions: None
 * Postconditions: None
 */
-void print_line(std::string const& msg) {
+void print_line(std::string const& msg)
+{
 	std::lock_guard<std::mutex> lk(console_mtx);
 
 	std::cout << msg << '\n';
@@ -42,10 +35,10 @@ void print_line(std::string const& msg) {
 *  Preconditions: None
 * Postconditions: None
 */
-std::string process_client_message(std::string const& msg) {
-
+std::string process_client_message(std::string const& msg)
+{
 	std::string rev = msg;
-	reverse(rev.begin(), rev.end());
+	std::reverse(rev.begin(), rev.end());
 
 	std::string response = "The message backwards is: '" + rev + "'";
 
@@ -58,7 +51,8 @@ std::string process_client_message(std::string const& msg) {
 *  Preconditions: Both the client and the server are running
 * Postconditions: If returns true, both the client and the server will be stopped
 */
-bool end_session_msg(std::string const& msg) {
+bool end_session_msg(std::string const& msg)
+{
 	std::string copy = msg;
 	std::transform(copy.begin(), copy.end(), copy.begin(), ::tolower);
 
@@ -73,8 +67,8 @@ bool end_session_msg(std::string const& msg) {
 * Postconditions: Server is stopped when the termination message is 
 *                 received from the client
 */
-void start_server() {
-
+void start_server()
+{
 	msl::SocketServer server("127.0.0.1");
 
 	server.start();
@@ -111,7 +105,8 @@ void start_server() {
 *  Preconditions: None
 * Postconditions: Client is stopped when the user enters the end message
 */
-void start_client() {
+void start_client()
+{
 	msl::SocketClient client("127.0.0.1");
 	client.start();
 	print_line(client.status());
@@ -150,8 +145,8 @@ void start_client() {
 *  Preconditions: None
 * Postconditions: None
 */
-int main(int argc, char *argv[]) {	
-
+int main(int argc, char *argv[])
+{
 	print_line("Launcher...\nHit any key to start server and client");
 	_getch();
 	std::thread ts(start_server);

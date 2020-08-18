@@ -1,26 +1,19 @@
-/*
-*    Authors: Adam Lafontaine, Yougui Chen
-*     Course: INFO 5104
-* Assignment: Project 3, Socket Library
-*       Date: January 9, 2018
-*
-*       File: SocketServer.cpp
-*/
-
 #include "../hpp/SocketServer.hpp"
+
 #include <vector>
 #include <sstream>
 #include <cassert>
 
-namespace MySocketLib {
-
+namespace MySocketLib
+{
 	/*
 	*        Purpose: Initializes WSA, TCP socket and the server address
 	*     Parameters: None
 	*  Preconditions: None
 	* Postconditions: Returns false if a problem occured during initialization
 	*/
-	bool SocketServer::init() {
+	bool SocketServer::init()
+	{
 		// initialize WSA
 		WSAData wsaData;
 		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -49,8 +42,8 @@ namespace MySocketLib {
 	*  Preconditions: None
 	* Postconditions: Returns false if a problem occured during binding
 	*/
-	bool SocketServer::bind_socket() {
-
+	bool SocketServer::bind_socket()
+	{
 		// bind the socket
 		if (bind(m_hSocket, (SOCKADDR*)&m_serverAddress, sizeof(m_serverAddress)) == SOCKET_ERROR) {
 			close();
@@ -67,8 +60,8 @@ namespace MySocketLib {
 	*  Preconditions: None
 	* Postconditions: Returns false and closes resources if there is a problem
 	*/
-	bool SocketServer::listen_socket() {
-
+	bool SocketServer::listen_socket()
+	{
 		m_running = false;
 		if (listen(m_hSocket, 1) == SOCKET_ERROR) {
 			close();
@@ -87,7 +80,8 @@ namespace MySocketLib {
 	*  Preconditions: Server is running
 	* Postconditions: Returns true if successful
 	*/
-	bool SocketServer::connect_client() {
+	bool SocketServer::connect_client()
+	{
 		if (!m_running) {
 			m_status = "Server cannot connect, server not running";
 			return false;
@@ -113,8 +107,8 @@ namespace MySocketLib {
 	*  Preconditions: None
 	* Postconditions: Server is running if successful
 	*/
-	void SocketServer::start() {
-
+	void SocketServer::start()
+	{
 		bool result = init();
 
 		if (!result)
@@ -139,7 +133,8 @@ namespace MySocketLib {
 	*  Preconditions: None
 	* Postconditions: server is stopped and can be restarted
 	*/
-	void SocketServer::stop() {
+	void SocketServer::stop()
+	{
 		disconnect_client();
 
 		m_running = false;
@@ -153,7 +148,8 @@ namespace MySocketLib {
 	*  Preconditions: None
 	* Postconditions: Resources cleaned up.  Able to reconnect.
 	*/
-	void SocketServer::close() {
+	void SocketServer::close()
+	{
 		if (m_open) {
 			closesocket(m_hSocket);
 			WSACleanup();
@@ -167,7 +163,8 @@ namespace MySocketLib {
 	*  Preconditions: None
 	* Postconditions: Client disconnected but still running.
 	*/
-	void SocketServer::disconnect_client() {
+	void SocketServer::disconnect_client()
+	{
 		if (m_connected) {
 			closesocket(m_hAccepted);
 			m_connected = false;
@@ -180,7 +177,8 @@ namespace MySocketLib {
 	*  Preconditions: Server is running and connected to client
 	* Postconditions: Returns the message when received
 	*/
-	std::string SocketServer::receive_text() {
+	std::string SocketServer::receive_text()
+	{
 		assert(m_running);
 		assert(m_connected);
 
@@ -205,7 +203,8 @@ namespace MySocketLib {
 	*  Preconditions: Server is running and connected to client
 	* Postconditions: Message is sent
 	*/
-	void SocketServer::send_text(std::string const& text) {
+	void SocketServer::send_text(std::string const& text)
+	{
 		assert(m_running);
 		assert(m_connected);
 		if (!m_running || !m_connected)

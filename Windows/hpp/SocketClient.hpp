@@ -1,31 +1,25 @@
-/*
-*    Authors: Adam Lafontaine, Yougui Chen
-*     Course: INFO 5104
-* Assignment: Project 3, Socket Library
-*       Date: January 9, 2018
-*
-*       File: SocketClient.hpp
-*/
-
 #pragma once
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
-#include <string>
 
 #include <WinSock2.h>
 #pragma comment (lib,"ws2_32.lib")
 
-namespace MySocketLib {
+#include <string>
 
+
+namespace MySocketLib
+{
 	// Class encapsulating WinSock client functionality
-	class SocketClient {
+	class SocketClient 
+	{
 	private:
 		unsigned short const PORT = 27015;
 		static int constexpr MAX_CHARS = 256;
 
 		const char* m_ip_address = "127.0.0.1";
 
-		SOCKET m_hSocket;
-		sockaddr_in m_serverAddress;
+		SOCKET m_hSocket = NULL;
+		sockaddr_in m_serverAddress = { 0 };
 
 		bool m_running = false;
 		bool m_open = false;
@@ -38,9 +32,7 @@ namespace MySocketLib {
 	public:
 		SocketClient() {}
 		SocketClient(const char* ip): m_ip_address(ip) {}
-		~SocketClient() {
-			close();
-		}
+		~SocketClient() { close(); }
 
 		void start();
 		void stop();
