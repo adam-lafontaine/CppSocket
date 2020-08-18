@@ -8,9 +8,8 @@
 */
 
 #pragma once
-#define m_WINSOCK_DEPRECATED_NO_WARNINGS
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <string>
-using namespace std;
 
 #include <WinSock2.h>
 #pragma comment (lib,"ws2_32.lib")
@@ -30,7 +29,7 @@ namespace MySocketLib {
 
 		bool m_running = false;
 		bool m_open = false;
-		string m_status = "";
+		std::string m_status = "";
 
 		bool connect_socket();
 		bool init();
@@ -45,9 +44,9 @@ namespace MySocketLib {
 
 		void start();
 		void stop();
-		void send_text(string const& text);
-		string receive_text();
-		string status() { return m_status; }
+		void send_text(std::string const& text);
+		std::string receive_text();
+		std::string status() { return m_status; }
 		bool running() { return m_running; }
 	};
 

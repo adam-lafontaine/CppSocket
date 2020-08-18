@@ -18,9 +18,7 @@
 
 namespace msl = MySocketLib;
 
-using namespace std;
-
-mutex console_mtx;
+std::mutex console_mtx;
 bool server_running = false;
 bool client_running = false;
 
@@ -31,10 +29,10 @@ bool client_running = false;
 *  Preconditions: None
 * Postconditions: None
 */
-void print_line(string const& msg) {
-	lock_guard<mutex> lk(console_mtx);
+void print_line(std::string const& msg) {
+	std::lock_guard<std::mutex> lk(console_mtx);
 
-	cout << msg << endl;
+	std::cout << msg << '\n';
 }
 
 /*
@@ -44,12 +42,12 @@ void print_line(string const& msg) {
 *  Preconditions: None
 * Postconditions: None
 */
-string process_client_message(string const& msg) {
+std::string process_client_message(std::string const& msg) {
 
-	string rev = msg;
+	std::string rev = msg;
 	reverse(rev.begin(), rev.end());
 
-	string response = "The message backwards is: '" + rev + "'";
+	std::string response = "The message backwards is: '" + rev + "'";
 
 	return response;
 }
@@ -60,9 +58,9 @@ string process_client_message(string const& msg) {
 *  Preconditions: Both the client and the server are running
 * Postconditions: If returns true, both the client and the server will be stopped
 */
-bool end_session_msg(string const& msg) {
-	string copy = msg;
-	transform(copy.begin(), copy.end(), copy.begin(), ::tolower);
+bool end_session_msg(std::string const& msg) {
+	std::string copy = msg;
+	std::transform(copy.begin(), copy.end(), copy.begin(), ::tolower);
 
 	return copy == "goodbye";
 }
@@ -88,9 +86,9 @@ void start_server() {
 
 	// handle input from client
 	while (server.running() && server.connected()) {
-		string msg = server.receive_text();
+		std::string msg = server.receive_text();
 				
-		string response = process_client_message(msg);
+		std::string response = process_client_message(msg);
 		server.send_text(response);
 
 		if (end_session_msg(msg)) {
@@ -124,16 +122,16 @@ void start_client() {
 	client_running = client.running();
 	
 	// handle user input
-	string text;
+	std::string text;
 	while (client.running()) {
-		getline(cin, text);
+		std::getline(std::cin, text);
 		client.send_text(text);
 
 		if (end_session_msg(text)) {
 			client.stop();
 		}
 		else {
-			string response = client.receive_text();
+			std::string response = client.receive_text();
 			print_line("Server responded with: " + response);
 		}
 	}
@@ -156,8 +154,8 @@ int main(int argc, char *argv[]) {
 
 	print_line("Launcher...\nHit any key to start server and client");
 	_getch();
-	thread ts(start_server); 
-	thread tc(start_client);
+	std::thread ts(start_server);
+	std::thread tc(start_client);
 
 	while(!server_running || !client_running){ /* wait for both processes to start */}
 	print_line("\nEnter text to send to server");

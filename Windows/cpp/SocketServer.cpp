@@ -180,13 +180,13 @@ namespace MySocketLib {
 	*  Preconditions: Server is running and connected to client
 	* Postconditions: Returns the message when received
 	*/
-	string SocketServer::receive_text() {
+	std::string SocketServer::receive_text() {
 		assert(m_running);
 		assert(m_connected);
 
 		char recvbuf[MAX_CHARS] = "";
 		bool waiting = true;
-		ostringstream oss;
+		std::ostringstream oss;
 
 		while (waiting) {
 			int bytesRecv = recv(m_hAccepted, recvbuf, MAX_CHARS, 0);
@@ -205,13 +205,13 @@ namespace MySocketLib {
 	*  Preconditions: Server is running and connected to client
 	* Postconditions: Message is sent
 	*/
-	void SocketServer::send_text(string const& text) {
+	void SocketServer::send_text(std::string const& text) {
 		assert(m_running);
 		assert(m_connected);
 		if (!m_running || !m_connected)
 			return;
 
-		vector<char> data(text.begin(), text.end());
+		std::vector<char> data(text.begin(), text.end());
 
 		int bytesSent = send(m_hAccepted, data.data(), static_cast<int>(data.size()), 0);
 	}
