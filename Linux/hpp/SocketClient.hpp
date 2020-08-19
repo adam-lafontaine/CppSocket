@@ -24,7 +24,7 @@ namespace SocketLib
         const char* m_srv_hostname;
 
         unsigned short m_srv_port_no;
-        int _socket; // socket file descriptor
+        int m_socket; // socket file descriptor
 
         struct sockaddr_in m_srv_addr; // contains server address
         struct hostent* m_srv_ptr;   // pointer to server info
@@ -79,9 +79,9 @@ namespace SocketLib
 
     bool SocketClient::init()
 	{
-        _socket = socket(AF_INET, SOCK_STREAM, 0);  // create socket
+        m_socket = socket(AF_INET, SOCK_STREAM, 0);  // create socket
 
-        if (_socket < 0)
+        if (m_socket < 0)
 		{
             m_status = "ERROR opening socket";
 			m_errors.push_back(system_error(m_status));
@@ -124,7 +124,7 @@ namespace SocketLib
 		}
 
         // connect the socket
-        int res = connect(_socket,(struct sockaddr *) &m_srv_addr,sizeof(m_srv_addr));		
+        int res = connect(m_socket,(struct sockaddr *) &m_srv_addr,sizeof(m_srv_addr));		
 		
 		if (res < 0)
 		{
@@ -142,7 +142,7 @@ namespace SocketLib
         if (!m_open)
 			return;
 
-		close(_socket);
+		close(m_socket);
 		m_open = false;
     }
 
@@ -168,7 +168,7 @@ namespace SocketLib
 		if (!m_running)
 			return false;
 
-        auto n_chars = write(_socket, text.data(), static_cast<int>(text.size()));
+        auto n_chars = write(m_socket, text.data(), static_cast<int>(text.size()));
 
         if (n_chars < 0)
 		{
@@ -194,7 +194,7 @@ namespace SocketLib
 
 		while (waiting)
 		{
-			n_chars = read(_socket, buffer, MAX_CHARS - 1);
+			n_chars = read(m_socket, buffer, MAX_CHARS - 1);
 			if (n_chars > 0)
 			{
 				waiting = false;

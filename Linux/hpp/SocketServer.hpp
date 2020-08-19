@@ -114,7 +114,7 @@ namespace SocketLib
     bool SocketServer::bind_socket()
     {
         // bind socket to server address
-        int bind_res = bind(m_srv_socket, (struct sockaddr*) &m_serv_addr, sizeof(m_serv_addr));
+        const int bind_res = bind(m_srv_socket, (struct sockaddr*) &m_serv_addr, sizeof(m_serv_addr));
 
         if (bind_res < 0)
         {
@@ -130,7 +130,7 @@ namespace SocketLib
 
     bool SocketServer::listen_socket()
     {
-        int res = listen(m_srv_socket, 5);
+        const int res = listen(m_srv_socket, 5);
         if(res < 0)
         {
             m_status = "ERROR listening on port " + std::to_string(m_port_no);
@@ -244,6 +244,7 @@ namespace SocketLib
     {
 		assert(m_running);
 		assert(m_connected);
+        
 		if (!m_running || !m_connected)
 			return false;
         
@@ -262,7 +263,7 @@ namespace SocketLib
 
     std::string SocketServer::latest_error()
     {
-        std::string delim = ", ";
+        const auto delim = ", ";
 
         std::string msg = "";
         for(auto const& err : m_errors)
