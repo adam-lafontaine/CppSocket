@@ -79,7 +79,8 @@ void start_server()
 	server_running = server.running() && server.connected();
 
 	// handle input from client
-	while (server.running() && server.connected()) {
+	while (server.running() && server.connected())
+	{
 		std::string msg = server.receive_text();
 				
 		std::string response = process_client_message(msg);
@@ -118,14 +119,17 @@ void start_client()
 	
 	// handle user input
 	std::string text;
-	while (client.running()) {
+	while (client.running())
+	{
 		std::getline(std::cin, text);
 		client.send_text(text);
 
-		if (end_session_msg(text)) {
+		if (end_session_msg(text))
+		{
 			client.stop();
 		}
-		else {
+		else
+		{
 			std::string response = client.receive_text();
 			print_line("Server responded with: " + response);
 		}
