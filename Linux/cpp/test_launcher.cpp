@@ -1,9 +1,8 @@
-#include <iostream>
-
 #include "../hpp/SocketServer.hpp"
 #include "../hpp/SocketClient.hpp"
 
-using namespace std;
+#include <iostream>
+#include <thread>
 
 
 // g++ -o tester test_launcher.cpp
@@ -12,21 +11,25 @@ using namespace std;
 int main(int argc, char *argv[])
 {
     SocketLib::SocketServer server;
-    cout << "server created" << endl;
-    server.start();
-    cout << server.status() << endl;
-    server.connect_client();
-    cout << server.status() << endl;
+    std::cout << "server created" << '\n';
 
     SocketLib::SocketClient client;
+    std::cout << "client created" << '\n';
+
+    server.start();
+    std::cout << server.status() << '\n';
+
+    server.connect_client();
+    std::cout << server.status() << '\n';
+    
     client.start();
-    cout << client.status() << endl;
+    std::cout << client.status() << '\n';
     
     server.stop();
-    cout << server.status() << endl;
+    std::cout << server.status() << '\n';
 
     client.stop();
-    cout << client.status() << endl;
+    std::cout << client.status() << '\n';
 
     
 }
