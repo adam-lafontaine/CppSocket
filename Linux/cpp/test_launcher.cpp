@@ -20,46 +20,13 @@ bool client_started = false;
 
 int main(int argc, char *argv[])
 {
-    /*
-    SocketLib::SocketServer server;
-    std::cout << "server created" << '\n';
-
-    SocketLib::SocketClient client;
-    std::cout << "client created" << '\n';
-
-    const auto svr = [&]()
-    {
-        server.start();
-        std::cout << server.status() << '\n';
-
-        server.connect_client();
-        std::cout << server.status() << '\n';
-
-        server.stop();
-        std::cout << server.status() << '\n';
-    };
-
-    const auto cli = [&]()
-    {
-        client.start();
-        std::cout << client.status() << '\n';
-
-        client.stop();
-        std::cout << client.status() << '\n';
-    };
-    */
-
     std::thread ts(run_server);
     std::thread tc(run_client);
 
-    while(!server_started || !client_started) { /* wait for both processes to start */ }
-    
+    while(!server_started || !client_started) { /* wait for both processes to start */ }    
 
     ts.join();
     tc.join();
-    
-
-    
 }
 
 //==============================
@@ -75,7 +42,7 @@ void print_line(std::string const& msg)
 
 bool end_session_msg(std::string const& msg)
 {
-	std::string copy = msg;
+	auto copy = msg;
 	std::transform(copy.begin(), copy.end(), copy.begin(), ::tolower);
 
 	return copy == "goodbye";
@@ -84,7 +51,7 @@ bool end_session_msg(std::string const& msg)
 
 std::string process_client_message(std::string const& msg)
 {
-	std::string rev = msg;
+	auto rev = msg;
 	std::reverse(rev.begin(), rev.end());
 
 	std::string response = "The message backwards is: '" + rev + "'";
@@ -108,9 +75,9 @@ void run_server()
     // handle input from client
 	while (server.running() && server.connected())
 	{
-		std::string msg = server.receive_text();
+		const auto msg = server.receive_text();
 				
-		std::string response = process_client_message(msg);
+		const auto response = process_client_message(msg);
 		server.send_text(response);
 
 		if (end_session_msg(msg)) {
