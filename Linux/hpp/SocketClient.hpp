@@ -168,9 +168,7 @@ namespace SocketLib
 		if (!m_running)
 			return false;
 
-		std::vector<char> message(text.begin(), text.end());       
-
-        int n_chars = write(_socket, message.data(), static_cast<int>(message.size()));
+        auto n_chars = write(_socket, text.data(), static_cast<int>(text.size()));
 
         if (n_chars < 0)
 		{
@@ -187,7 +185,7 @@ namespace SocketLib
 		assert(m_running);
 
 		char buffer[MAX_CHARS]; // characters are read into this buffer
-        int n_chars; // number of characters read or written
+        ssize_t n_chars; // number of characters read or written
 
         bool waiting = true;
 		std::ostringstream oss;
@@ -209,15 +207,15 @@ namespace SocketLib
 
 	std::string SocketClient::latest_error()
 	{
-        std::string delim = ", ";
+        const auto delim = ", ";
 
-        std::ostringstream oss;
-        for(const std::string& err : m_errors)
+		std::string msg = "";
+        for(auto const& err : m_errors)
 		{
-            oss << err << delim;
+            msg += err;
+			msg += delim;
         }
 
-		std::string msg = oss.str();
 		msg.pop_back();
 		msg.pop_back();
 
@@ -228,10 +226,7 @@ namespace SocketLib
 
 	std::string SocketClient::system_error(std::string const& msg)
 	{
-		std::ostringstream oss;
-		oss << msg << ": " << strerror(errno);
-
-		return oss.str();
+		return msg + ": " + strerror(errno);
 	}
 }
 

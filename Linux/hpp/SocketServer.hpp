@@ -131,7 +131,8 @@ namespace SocketLib
     bool SocketServer::listen_socket()
     {
         int res = listen(m_srv_socket, 5);
-        if(res < 0) {
+        if(res < 0)
+        {
             m_status = "ERROR listening on port " + std::to_string(m_port_no);
             m_errors.push_back(system_error(m_status));
             return false;
@@ -155,17 +156,8 @@ namespace SocketLib
     {
         m_running = false;
 
-		if (!init()) {
-            close_socket();
-            return;
-        }			
-
-		if (!bind_socket()) {
-            close_socket();
-            return;
-        }
-
-		if (!listen_socket()) {
+		if (!init() || !bind_socket() || !listen_socket())
+        {
             close_socket();
             return;
         }
@@ -184,7 +176,8 @@ namespace SocketLib
 
     bool SocketServer::connect_client()
     {
-        if (!m_running) {
+        if (!m_running)
+        {
 			m_status = "Server cannot connect, server not running";
 			return false;
 		}
@@ -197,7 +190,8 @@ namespace SocketLib
         // waits for client to connect        
         m_cli_socket = accept(m_srv_socket, (struct sockaddr *) &m_cli_addr, &m_cli_len);
 
-        if (m_cli_socket < 0) {
+        if (m_cli_socket < 0)
+        {
             m_status = "ERROR on accept";
             m_errors.push_back(system_error(m_status));
             return false;
@@ -227,16 +221,11 @@ namespace SocketLib
 		assert(m_connected);
 
 		char buffer[MAX_CHARS]; // characters are read into this buffer
-        int n_chars; // number of characters read or written
-
-		bool waiting = true;
-		std::ostringstream oss;
 
 		bzero(buffer, MAX_CHARS); // initialize buffer to zeros
 
         // waits for message from client to be read to buffer
-        //printf("Waiting for message from client...\n");
-        n_chars = read(m_cli_socket, buffer, MAX_CHARS - 1);
+        int n_chars = read(m_cli_socket, buffer, MAX_CHARS - 1);
 
         if (n_chars < 0)
         {
@@ -244,7 +233,8 @@ namespace SocketLib
             m_errors.push_back(system_error(m_status));
             return "error";
         }
-        
+
+        std::ostringstream oss;        
         oss << buffer;
 
 		return oss.str();
@@ -256,13 +246,12 @@ namespace SocketLib
 		assert(m_connected);
 		if (!m_running || !m_connected)
 			return false;
-
-		std::vector<char> message(text.begin(), text.end());
-
+        
         // send message to client
-        int n_chars = write(m_cli_socket, message.data(), static_cast<int>(message.size()));
+        int n_chars = write(m_cli_socket, text.data(), static_cast<int>(text.size()));
 
-        if (n_chars < 0) {
+        if (n_chars < 0)
+        {
             m_status = "ERROR writing to client socket";
             m_errors.push_back(system_error(m_status));
             return false;
@@ -275,12 +264,13 @@ namespace SocketLib
     {
         std::string delim = ", ";
 
-        std::ostringstream oss;
-        for(const std::string& err : m_errors) {
-            oss << err << delim;
+        std::string msg = "";
+        for(auto const& err : m_errors)
+		{
+            msg += err;
+			msg += delim;
         }
 
-		std::string msg = oss.str();
 		msg.pop_back();
 		msg.pop_back();
 
@@ -290,11 +280,8 @@ namespace SocketLib
     }
 
     std::string SocketServer::system_error(std::string const& msg)
-    {
-		std::ostringstream oss;
-		oss << msg << ": " << strerror(errno);
-
-		return oss.str();
+	{
+		return msg + ": " + strerror(errno);
 	}
 
     void SocketServer::get_network_info()
