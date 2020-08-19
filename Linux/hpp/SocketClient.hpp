@@ -21,17 +21,17 @@ namespace SocketLib
         static int constexpr MAX_CHARS = 256;
         const char* DEFAULT_HOST = "localhost";
 		
-        const char* _srv_hostname;
+        const char* m_srv_hostname;
 
-        unsigned short _srv_port_no;
+        unsigned short m_srv_port_no;
         int _socket; // socket file descriptor
 
-        struct sockaddr_in _srv_addr; // contains server address
-        struct hostent* _srv_ptr;   // pointer to server info
+        struct sockaddr_in m_srv_addr; // contains server address
+        struct hostent* m_srv_ptr;   // pointer to server info
 
-		bool _running = false;
-		bool _open = false;
-		std::string _status = "";
+		bool m_running = false;
+		bool m_open = false;
+		std::string m_status = "";
 
         bool init();
 		bool connect_socket();		
@@ -39,26 +39,26 @@ namespace SocketLib
 
 		std::string system_error(std::string const& msg);
 
-		std::vector<std::string> _errors;
+		std::vector<std::string> m_errors;
 		
 
 	public:
 		SocketClient()
 		{ 
-			_srv_hostname = DEFAULT_HOST;
-			_srv_port_no = DEFAULT_PORT;
+			m_srv_hostname = DEFAULT_HOST;
+			m_srv_port_no = DEFAULT_PORT;
 		 }
 
 		SocketClient(std::string const& srv_hostname, unsigned short srv_port)
 		{
-			_srv_hostname = srv_hostname.c_str();
-			_srv_port_no = srv_port;
+			m_srv_hostname = srv_hostname.c_str();
+			m_srv_port_no = srv_port;
 		}
 
 		SocketClient(const char* srv_hostname, unsigned short srv_port)
 		{
-			_srv_hostname = srv_hostname;
-			_srv_port_no = srv_port;
+			m_srv_hostname = srv_hostname;
+			m_srv_port_no = srv_port;
 		}
 
 		~SocketClient() { close_socket(); }
@@ -67,10 +67,10 @@ namespace SocketLib
 		void stop();
 		bool send_text(std::string const& text);
 		std::string receive_text();
-		std::string status() { return _status; }
-		bool running() { return _running; }
+		std::string status() { return m_status; }
+		bool running() { return m_running; }
 
-		bool has_error() { return !_errors.empty(); }
+		bool has_error() { return !m_errors.empty(); }
         std::string latest_error();
 
     };
@@ -83,53 +83,53 @@ namespace SocketLib
 
         if (_socket < 0)
 		{
-            _status = "ERROR opening socket";
-			_errors.push_back(system_error(_status));
+            m_status = "ERROR opening socket";
+			m_errors.push_back(system_error(m_status));
             return false;
         }		
 
-        _srv_ptr = gethostbyname(_srv_hostname);
+        m_srv_ptr = gethostbyname(m_srv_hostname);
 
-        if(_srv_ptr == NULL)
+        if(m_srv_ptr == NULL)
 		{
-            _status = "ERROR host not found";
-			_errors.push_back(system_error(_status));
+            m_status = "ERROR host not found";
+			m_errors.push_back(system_error(m_status));
             return false;
         }
 
         // populate serv_addr
-        bzero((char *) &_srv_addr, sizeof(_srv_addr)); // initialize to zeros
+        bzero((char *) &m_srv_addr, sizeof(m_srv_addr)); // initialize to zeros
 
-        _srv_addr.sin_family = AF_INET;    
+        m_srv_addr.sin_family = AF_INET;    
 
         // copy server address bytes to serv_addr
-        bcopy((char *)_srv_ptr->h_addr_list[0], (char *)&_srv_addr.sin_addr.s_addr, _srv_ptr->h_length);
+        bcopy((char *)m_srv_ptr->h_addr_list[0], (char *)&m_srv_addr.sin_addr.s_addr, m_srv_ptr->h_length);
         // #define h_addr  h_addr_list[0]  /* address, for backward compatiblity */		
 
-        _srv_addr.sin_port = htons(_srv_port_no);            
+        m_srv_addr.sin_port = htons(m_srv_port_no);            
 
-        _open = true;
+        m_open = true;
 
-		_status = "Client Initialized";
+		m_status = "Client Initialized";
 
         return true;
     }
 
     bool SocketClient::connect_socket()
 	{
-        if (!_open)
+        if (!m_open)
 		{
-			_status = "Client not initialized.";
+			m_status = "Client not initialized.";
 			return false;
 		}
 
         // connect the socket
-        int res = connect(_socket,(struct sockaddr *) &_srv_addr,sizeof(_srv_addr));		
+        int res = connect(_socket,(struct sockaddr *) &m_srv_addr,sizeof(m_srv_addr));		
 		
 		if (res < 0)
 		{
-			_status = "ERROR Client connect failed";
-			_errors.push_back(system_error(_status));
+			m_status = "ERROR Client connect failed";
+			m_errors.push_back(system_error(m_status));
 			close_socket();
 			return false;
 		}
@@ -139,11 +139,11 @@ namespace SocketLib
 
     void SocketClient::close_socket()
 	{
-        if (!_open)
+        if (!m_open)
 			return;
 
 		close(_socket);
-		_open = false;
+		m_open = false;
     }
 
     void SocketClient::start()
@@ -151,21 +151,21 @@ namespace SocketLib
         if (!init() || !connect_socket())
 			return;
 
-		_running = true;
-		_status = "Client started";
+		m_running = true;
+		m_status = "Client started";
     }
 
     void SocketClient::stop()
 	{
-		_running = false;
+		m_running = false;
 		close_socket();
-		_status = "Client stopped";
+		m_status = "Client stopped";
 	}
 
     bool SocketClient::send_text(std::string const& text)
 	{
-		assert(_running);
-		if (!_running)
+		assert(m_running);
+		if (!m_running)
 			return false;
 
 		std::vector<char> message(text.begin(), text.end());       
@@ -174,8 +174,8 @@ namespace SocketLib
 
         if (n_chars < 0)
 		{
-            _status = "ERROR writing to socket";
-			_errors.push_back(system_error(_status));
+            m_status = "ERROR writing to socket";
+			m_errors.push_back(system_error(m_status));
             return false;
         }
 
@@ -184,7 +184,7 @@ namespace SocketLib
 
     std::string SocketClient::receive_text()
 	{
-		assert(_running);
+		assert(m_running);
 
 		char buffer[MAX_CHARS]; // characters are read into this buffer
         int n_chars; // number of characters read or written
@@ -212,7 +212,7 @@ namespace SocketLib
         std::string delim = ", ";
 
         std::ostringstream oss;
-        for(const std::string& err : _errors)
+        for(const std::string& err : m_errors)
 		{
             oss << err << delim;
         }
@@ -221,7 +221,7 @@ namespace SocketLib
 		msg.pop_back();
 		msg.pop_back();
 
-		_errors.clear();
+		m_errors.clear();
 
 		return msg;
     }
