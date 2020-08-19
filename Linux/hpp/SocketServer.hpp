@@ -14,8 +14,6 @@
 #include<sstream>
 #include<cassert>
 
-using namespace std;
-
 namespace SocketLib 
 { 
     class SocketServer 
@@ -29,8 +27,8 @@ namespace SocketLib
         bool _connected = false;
         std::string _status = "";
 
-        string _net_interface = "NA";
-        string _public_ip = "NA";
+        std::string _net_interface = "NA";
+        std::string _public_ip = "NA";
 
         unsigned short _port_no;
         int _srv_socket; // server socket file descriptor
@@ -49,7 +47,7 @@ namespace SocketLib
 
         std::vector<std::string> _errors;
 
-        string system_error(string const& msg); 
+        std::string system_error(std::string const& msg); 
         
     public:
         SocketServer()
@@ -134,12 +132,12 @@ namespace SocketLib
     {
         int res = listen(_srv_socket, 5);
         if(res < 0) {
-            _status = "ERROR listening on port " + to_string(_port_no);
+            _status = "ERROR listening on port " + std::to_string(_port_no);
             _errors.push_back(system_error(_status));
             return false;
         }
 
-        _status =  "Listening on " + _public_ip + " : " + to_string(_port_no);
+        _status =  "Listening on " + _public_ip + " : " + std::to_string(_port_no);
         return true;
     }
 
@@ -232,7 +230,7 @@ namespace SocketLib
         int n_chars; // number of characters read or written
 
 		bool waiting = true;
-		ostringstream oss;
+		std::ostringstream oss;
 
 		bzero(buffer, MAX_CHARS); // initialize buffer to zeros
 
@@ -259,7 +257,7 @@ namespace SocketLib
 		if (!_running || !_connected)
 			return false;
 
-		vector<char> message(text.begin(), text.end());
+		std::vector<char> message(text.begin(), text.end());
 
         // send message to client
         int n_chars = write(_cli_socket, message.data(), static_cast<int>(message.size()));
@@ -277,7 +275,7 @@ namespace SocketLib
     {
         std::string delim = ", ";
 
-        ostringstream oss;
+        std::ostringstream oss;
         for(const std::string& err : _errors) {
             oss << err << delim;
         }
@@ -291,9 +289,9 @@ namespace SocketLib
 		return msg;
     }
 
-    string SocketServer::system_error(string const& msg)
+    std::string SocketServer::system_error(std::string const& msg)
     {
-		ostringstream oss;
+		std::ostringstream oss;
 		oss << msg << ": " << strerror(errno);
 
 		return oss.str();
@@ -308,14 +306,16 @@ namespace SocketLib
         
         f = fopen("/proc/net/route" , "r");
         
-        while(fgets(line , 100 , f)) {
-
+        while(fgets(line , 100 , f))
+        {
             p = strtok(line , " \t");
             c = strtok(NULL , " \t");
             
-            if(p!=NULL && c!=NULL) {
-                if(strcmp(c , "00000000") == 0) {
-                    _net_interface = string(p);                    
+            if(p!=NULL && c!=NULL)
+            {
+                if(strcmp(c , "00000000") == 0)
+                {
+                    _net_interface = std::string(p);                    
                     break;
                 }
             }
@@ -350,12 +350,13 @@ namespace SocketLib
             
             s = getnameinfo( ifa->ifa_addr, family_size , host , NI_MAXHOST , NULL , 0 , NI_NUMERICHOST);
                 
-            if (s != 0) {
+            if (s != 0)
+            {
                 _public_ip = "error";
                 return;
             }
             
-            _public_ip = string(host);
+            _public_ip = std::string(host);
         }
 
         freeifaddrs(ifaddr);

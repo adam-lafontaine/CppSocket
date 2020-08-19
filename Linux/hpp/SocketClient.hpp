@@ -12,8 +12,6 @@
 #include<sstream>
 #include<cassert>
 
-using namespace std;
-
 namespace SocketLib
 {
     class SocketClient
@@ -33,15 +31,15 @@ namespace SocketLib
 
 		bool _running = false;
 		bool _open = false;
-		string _status = "";
+		std::string _status = "";
 
         bool init();
 		bool connect_socket();		
 		void close_socket();
 
-		string system_error(string const& msg);
+		std::string system_error(std::string const& msg);
 
-		vector<string> _errors;
+		std::vector<std::string> _errors;
 		
 
 	public:
@@ -51,7 +49,7 @@ namespace SocketLib
 			_srv_port_no = DEFAULT_PORT;
 		 }
 
-		SocketClient(string const& srv_hostname, unsigned short srv_port)
+		SocketClient(std::string const& srv_hostname, unsigned short srv_port)
 		{
 			_srv_hostname = srv_hostname.c_str();
 			_srv_port_no = srv_port;
@@ -67,13 +65,13 @@ namespace SocketLib
 
 		void start();
 		void stop();
-		bool send_text(string const& text);
-		string receive_text();
-		string status() { return _status; }
+		bool send_text(std::string const& text);
+		std::string receive_text();
+		std::string status() { return _status; }
 		bool running() { return _running; }
 
 		bool has_error() { return !_errors.empty(); }
-        string latest_error();
+        std::string latest_error();
 
     };
 
@@ -164,13 +162,13 @@ namespace SocketLib
 		_status = "Client stopped";
 	}
 
-    bool SocketClient::send_text(string const& text)
+    bool SocketClient::send_text(std::string const& text)
 	{
 		assert(_running);
 		if (!_running)
 			return false;
 
-		vector<char> message(text.begin(), text.end());       
+		std::vector<char> message(text.begin(), text.end());       
 
         int n_chars = write(_socket, message.data(), static_cast<int>(message.size()));
 
@@ -184,7 +182,7 @@ namespace SocketLib
         return true;
     }
 
-    string SocketClient::receive_text()
+    std::string SocketClient::receive_text()
 	{
 		assert(_running);
 
@@ -192,7 +190,7 @@ namespace SocketLib
         int n_chars; // number of characters read or written
 
         bool waiting = true;
-		ostringstream oss;
+		std::ostringstream oss;
 
         bzero(buffer, MAX_CHARS);        
 
@@ -209,17 +207,17 @@ namespace SocketLib
 		return oss.str();
 	}
 
-	string SocketClient::latest_error()
+	std::string SocketClient::latest_error()
 	{
-        string delim = ", ";
+        std::string delim = ", ";
 
-        ostringstream oss;
-        for(const string& err : _errors)
+        std::ostringstream oss;
+        for(const std::string& err : _errors)
 		{
             oss << err << delim;
         }
 
-		string msg = oss.str();
+		std::string msg = oss.str();
 		msg.pop_back();
 		msg.pop_back();
 
@@ -228,9 +226,9 @@ namespace SocketLib
 		return msg;
     }
 
-	string SocketClient::system_error(string const& msg)
+	std::string SocketClient::system_error(std::string const& msg)
 	{
-		ostringstream oss;
+		std::ostringstream oss;
 		oss << msg << ": " << strerror(errno);
 
 		return oss.str();
