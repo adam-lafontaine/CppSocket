@@ -14,10 +14,10 @@
 
 using namespace std;
 
-namespace SocketLib {
-
-    class SocketClient {
-
+namespace SocketLib
+{
+    class SocketClient
+	{
     private:
 		unsigned short const DEFAULT_PORT = 27015;
         static int constexpr MAX_CHARS = 256;
@@ -45,24 +45,25 @@ namespace SocketLib {
 		
 
 	public:
-		SocketClient() { 
+		SocketClient()
+		{ 
 			_srv_hostname = DEFAULT_HOST;
 			_srv_port_no = DEFAULT_PORT;
 		 }
 
-		SocketClient(string const& srv_hostname, unsigned short srv_port) {
+		SocketClient(string const& srv_hostname, unsigned short srv_port)
+		{
 			_srv_hostname = srv_hostname.c_str();
 			_srv_port_no = srv_port;
 		}
 
-		SocketClient(const char* srv_hostname, unsigned short srv_port) {
+		SocketClient(const char* srv_hostname, unsigned short srv_port)
+		{
 			_srv_hostname = srv_hostname;
 			_srv_port_no = srv_port;
 		}
 
-		~SocketClient() {
-			close_socket();
-		}
+		~SocketClient() { close_socket(); }
 
 		void start();
 		void stop();
@@ -78,11 +79,12 @@ namespace SocketLib {
 
     //========================================
 
-    bool SocketClient::init() {
-
+    bool SocketClient::init()
+	{
         _socket = socket(AF_INET, SOCK_STREAM, 0);  // create socket
 
-        if (_socket < 0) {
+        if (_socket < 0)
+		{
             _status = "ERROR opening socket";
 			_errors.push_back(system_error(_status));
             return false;
@@ -90,7 +92,8 @@ namespace SocketLib {
 
         _srv_ptr = gethostbyname(_srv_hostname);
 
-        if(_srv_ptr == NULL) {
+        if(_srv_ptr == NULL)
+		{
             _status = "ERROR host not found";
 			_errors.push_back(system_error(_status));
             return false;
@@ -114,9 +117,10 @@ namespace SocketLib {
         return true;
     }
 
-    bool SocketClient::connect_socket() {
-
-        if (!_open) {
+    bool SocketClient::connect_socket()
+	{
+        if (!_open)
+		{
 			_status = "Client not initialized.";
 			return false;
 		}
@@ -124,7 +128,8 @@ namespace SocketLib {
         // connect the socket
         int res = connect(_socket,(struct sockaddr *) &_srv_addr,sizeof(_srv_addr));		
 		
-		if (res < 0) {
+		if (res < 0)
+		{
 			_status = "ERROR Client connect failed";
 			_errors.push_back(system_error(_status));
 			close_socket();
@@ -134,8 +139,8 @@ namespace SocketLib {
 		return true;
     }
 
-    void SocketClient::close_socket() {
-
+    void SocketClient::close_socket()
+	{
         if (!_open)
 			return;
 
@@ -143,27 +148,24 @@ namespace SocketLib {
 		_open = false;
     }
 
-    void SocketClient::start() {
-
-        if (!init()) {			
+    void SocketClient::start()
+	{
+        if (!init() || !connect_socket())
 			return;
-		}
-
-		if (!connect_socket()) {
-			return;
-		}
 
 		_running = true;
 		_status = "Client started";
     }
 
-    void SocketClient::stop() {
+    void SocketClient::stop()
+	{
 		_running = false;
 		close_socket();
 		_status = "Client stopped";
 	}
 
-    bool SocketClient::send_text(string const& text) {
+    bool SocketClient::send_text(string const& text)
+	{
 		assert(_running);
 		if (!_running)
 			return false;
@@ -172,7 +174,8 @@ namespace SocketLib {
 
         int n_chars = write(_socket, message.data(), static_cast<int>(message.size()));
 
-        if (n_chars < 0) {
+        if (n_chars < 0)
+		{
             _status = "ERROR writing to socket";
 			_errors.push_back(system_error(_status));
             return false;
@@ -181,7 +184,8 @@ namespace SocketLib {
         return true;
     }
 
-    string SocketClient::receive_text() {
+    string SocketClient::receive_text()
+	{
 		assert(_running);
 
 		char buffer[MAX_CHARS]; // characters are read into this buffer
@@ -192,9 +196,11 @@ namespace SocketLib {
 
         bzero(buffer, MAX_CHARS);        
 
-		while (waiting) {
+		while (waiting)
+		{
 			n_chars = read(_socket, buffer, MAX_CHARS - 1);
-			if (n_chars > 0) {
+			if (n_chars > 0)
+			{
 				waiting = false;
 				oss << buffer;
 			}
@@ -203,12 +209,13 @@ namespace SocketLib {
 		return oss.str();
 	}
 
-	string SocketClient::latest_error() {
-
+	string SocketClient::latest_error()
+	{
         string delim = ", ";
 
         ostringstream oss;
-        for(const string& err : _errors) {
+        for(const string& err : _errors)
+		{
             oss << err << delim;
         }
 
@@ -221,8 +228,8 @@ namespace SocketLib {
 		return msg;
     }
 
-	string SocketClient::system_error(string const& msg) {
-
+	string SocketClient::system_error(string const& msg)
+	{
 		ostringstream oss;
 		oss << msg << ": " << strerror(errno);
 

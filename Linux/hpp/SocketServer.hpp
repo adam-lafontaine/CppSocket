@@ -16,9 +16,10 @@
 
 using namespace std;
 
-namespace SocketLib {    
-
-    class SocketServer {
+namespace SocketLib 
+{ 
+    class SocketServer 
+    {
     private:
         unsigned short const DEFAULT_PORT = 27015;
         static int constexpr MAX_CHARS = 256;
@@ -51,22 +52,25 @@ namespace SocketLib {
         string system_error(string const& msg); 
         
     public:
-        SocketServer() { 
+        SocketServer()
+        { 
             _port_no = DEFAULT_PORT;
             get_network_info();
         }
 
-        SocketServer(unsigned short port){ 
+        SocketServer(unsigned short port)
+        { 
             _port_no = port;
             get_network_info();
         }
 
-        ~SocketServer() {
+        ~SocketServer()
+        {
             disconnect_client();
             close_socket();
         }
 
-        void set_port(unsigned port){ _port_no = port; }
+        void set_port(unsigned port) { _port_no = port; }
 
         void start();
         void stop();
@@ -86,11 +90,12 @@ namespace SocketLib {
 
     //====================================================
 
-    bool SocketServer::init() {
-
+    bool SocketServer::init() 
+    {
         _srv_socket = socket(AF_INET, SOCK_STREAM, 0); // create socket
 
-        if (_srv_socket < 0) {
+        if (_srv_socket < 0)
+        {
             _status = "ERROR opening socket";
             _errors.push_back(system_error(_status));
             return false;
@@ -108,12 +113,13 @@ namespace SocketLib {
         return true;
     }
 
-    bool SocketServer::bind_socket() {
-
+    bool SocketServer::bind_socket()
+    {
         // bind socket to server address
         int bind_res = bind(_srv_socket, (struct sockaddr*) &_serv_addr, sizeof(_serv_addr));
 
-        if (bind_res < 0) {
+        if (bind_res < 0)
+        {
             _status = "ERROR binding socket";
             _errors.push_back(system_error(_status));
             return false;
@@ -124,8 +130,8 @@ namespace SocketLib {
         return true;   
     }
 
-    bool SocketServer::listen_socket() {
-
+    bool SocketServer::listen_socket()
+    {
         int res = listen(_srv_socket, 5);
         if(res < 0) {
             _status = "ERROR listening on port " + to_string(_port_no);
@@ -137,7 +143,8 @@ namespace SocketLib {
         return true;
     }
 
-    void SocketServer::close_socket() {
+    void SocketServer::close_socket()
+    {
         if(!_open)
             return;
 
@@ -146,7 +153,8 @@ namespace SocketLib {
         _open = false;
     }
 
-    void SocketServer::start() {
+    void SocketServer::start()
+    {
         _running = false;
 
 		if (!init()) {
@@ -167,7 +175,8 @@ namespace SocketLib {
 		_running = true;
     }
 
-    void SocketServer::stop() {
+    void SocketServer::stop()
+    {
 		disconnect_client();
 
 		_running = false;
@@ -175,7 +184,8 @@ namespace SocketLib {
 		_status = "Server stopped";
 	}
 
-    bool SocketServer::connect_client() {
+    bool SocketServer::connect_client()
+    {
         if (!_running) {
 			_status = "Server cannot connect, server not running";
 			return false;
@@ -201,7 +211,8 @@ namespace SocketLib {
 		return true;
     }
 
-    void SocketServer::disconnect_client() {
+    void SocketServer::disconnect_client()
+    {
 		if (!_connected)
             return;
         
@@ -212,7 +223,8 @@ namespace SocketLib {
         _connected = false;
 	}
 
-    std::string SocketServer::receive_text() {
+    std::string SocketServer::receive_text()
+    {
 		assert(_running);
 		assert(_connected);
 
@@ -228,7 +240,8 @@ namespace SocketLib {
         //printf("Waiting for message from client...\n");
         n_chars = read(_cli_socket, buffer, MAX_CHARS - 1);
 
-        if (n_chars < 0) {
+        if (n_chars < 0)
+        {
             _status = "ERROR reading from client socket";
             _errors.push_back(system_error(_status));
             return "error";
@@ -239,7 +252,8 @@ namespace SocketLib {
 		return oss.str();
 	}
 
-    bool SocketServer::send_text(std::string const& text) {
+    bool SocketServer::send_text(std::string const& text)
+    {
 		assert(_running);
 		assert(_connected);
 		if (!_running || !_connected)
@@ -259,8 +273,8 @@ namespace SocketLib {
         return true;
 	}
 
-    std::string SocketServer::latest_error() {
-
+    std::string SocketServer::latest_error()
+    {
         std::string delim = ", ";
 
         ostringstream oss;
@@ -277,15 +291,16 @@ namespace SocketLib {
 		return msg;
     }
 
-    string SocketServer::system_error(string const& msg) {
-
+    string SocketServer::system_error(string const& msg)
+    {
 		ostringstream oss;
 		oss << msg << ": " << strerror(errno);
 
 		return oss.str();
 	}
 
-    void SocketServer::get_network_info() {
+    void SocketServer::get_network_info()
+    {
         //https://www.binarytides.com/get-local-ip-c-linux/
 
         FILE *f;
@@ -312,13 +327,15 @@ namespace SocketLib {
         int family , s;
         char host[NI_MAXHOST];
 
-        if (getifaddrs(&ifaddr) == -1) {
+        if (getifaddrs(&ifaddr) == -1)
+        {
             _public_ip = "error";
             return;
         }
 
         //Walk through linked list, maintaining head pointer so we can free list later
-        for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+        for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+        {
             if (ifa->ifa_addr == NULL)
                 continue;
 
