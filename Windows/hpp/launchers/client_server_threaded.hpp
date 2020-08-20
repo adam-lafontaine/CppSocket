@@ -80,7 +80,7 @@ void start_server()
 
 void start_client()
 {
-	msl::SocketClient client("127.0.0.1");
+	msl::SocketClient client;
 	client.start();
 	print_line(client.status());
 
