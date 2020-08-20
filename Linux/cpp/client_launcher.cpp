@@ -3,7 +3,7 @@
 #include "../hpp/SocketClient.hpp"
 
 
-// g++ -o client client_launcher.cpp
+// g++ -o client client_launcher.cpp -std=c++17
 // ./client
 
 int main(int argc, char* argv[])

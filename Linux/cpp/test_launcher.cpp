@@ -18,7 +18,7 @@ void run_client();
 bool server_started = false;
 bool client_started = false;
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     std::thread ts(run_server);
     std::thread tc(run_client);
@@ -76,7 +76,7 @@ void run_server()
 	while (server.running() && server.connected())
 	{
 		const auto msg = server.receive_text();
-				
+		
 		const auto response = process_client_message(msg);
 		server.send_text(response);
 

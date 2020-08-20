@@ -33,21 +33,20 @@ namespace SocketLib
 		bool m_open = false;
 		std::string m_status = "";
 
+		std::vector<std::string> m_errors;
+
         bool init();
 		bool connect_socket();		
 		void close_socket();
 
 		std::string system_error(std::string const& msg);
 
-		std::vector<std::string> m_errors;
-		
-
 	public:
 		SocketClient()
 		{ 
 			m_srv_hostname = DEFAULT_HOST;
 			m_srv_port_no = DEFAULT_PORT;
-		 }
+		}
 
 		SocketClient(std::string const& srv_hostname, unsigned short srv_port)
 		{
@@ -185,7 +184,6 @@ namespace SocketLib
 		assert(m_running);
 
 		char buffer[MAX_CHARS]; // characters are read into this buffer
-        ssize_t n_chars; // number of characters read or written
 
         bool waiting = true;
 		std::ostringstream oss;
@@ -194,7 +192,7 @@ namespace SocketLib
 
 		while (waiting)
 		{
-			n_chars = read(m_socket, buffer, MAX_CHARS - 1);
+			auto n_chars = read(m_socket, buffer, MAX_CHARS - 1);
 			if (n_chars > 0)
 			{
 				waiting = false;

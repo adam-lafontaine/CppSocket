@@ -75,6 +75,8 @@ namespace SocketLib
         bool connect_client();
         void disconnect_client();
 
+
+
         std::string receive_text();
         bool send_text(std::string const& text);        
 
@@ -131,14 +133,15 @@ namespace SocketLib
     bool SocketServer::listen_socket()
     {
         const int res = listen(m_srv_socket, 5);
+        const auto port = std::to_string(m_port_no);
         if(res < 0)
         {
-            m_status = "ERROR listening on port " + std::to_string(m_port_no);
+            m_status = "ERROR listening on port " + port;
             m_errors.push_back(system_error(m_status));
             return false;
         }
 
-        m_status =  "Listening on " + m_public_ip + " : " + std::to_string(m_port_no);
+        m_status =  "Listening on " + m_public_ip + " : " + port;
         return true;
     }
 

@@ -3,7 +3,7 @@
 #include "../hpp/SocketServer.hpp"
 
 
-// g++ -o server server_launcher.cpp
+// g++ -o server server_launcher.cpp -std=c++17
 // ./server
 
 int main(int argc, char* argv[])
