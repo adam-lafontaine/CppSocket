@@ -1,6 +1,6 @@
-#include <iostream>
-
 #include "../hpp/SocketServer.hpp"
+
+#include <iostream>
 
 
 // g++ -o server server_launcher.cpp -std=c++17

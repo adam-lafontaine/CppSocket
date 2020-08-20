@@ -18,25 +18,28 @@ namespace SocketLib
 { 
     class SocketServer 
     {
-    private:
-        unsigned short const DEFAULT_PORT = 27015;
+    private:        
         static int constexpr MAX_CHARS = 256;
+        unsigned short const DEFAULT_PORT = 27015;
+
+        std::string m_net_interface = "NA";
+
+        std::string m_public_ip = "NA";
+        unsigned short m_port_no = DEFAULT_PORT;
+
+        int m_srv_socket; // server socket file descriptor
+        int m_cli_socket; // client socket file descriptor
+
+        struct sockaddr_in m_serv_addr = { 0 }; // contains server address
+        struct sockaddr_in m_cli_addr = { 0 };  // contains client address
+        socklen_t m_cli_len; // size of address on client
         
         bool m_running = false;
         bool m_open = false;
         bool m_connected = false;
         std::string m_status = "";
 
-        std::string m_net_interface = "NA";
-        std::string m_public_ip = "NA";
-
-        unsigned short m_port_no;
-        int m_srv_socket; // server socket file descriptor
-        int m_cli_socket; // client socket file descriptor
-
-        struct sockaddr_in m_serv_addr; // contains server address
-        struct sockaddr_in m_cli_addr;  // contains client address
-        socklen_t m_cli_len; // size of address on client
+        std::vector<std::string> m_errors;
 
         void get_network_info();
 
@@ -45,9 +48,9 @@ namespace SocketLib
         bool listen_socket();
         void close_socket();
 
-        std::vector<std::string> m_errors;
-
-        std::string system_error(std::string const& msg); 
+        // TODO: move to helpers
+		std::string system_error(std::string const& msg);
+		std::string to_csv(std::vector<std::string> const& list);
         
     public:
         SocketServer()
@@ -88,7 +91,31 @@ namespace SocketLib
         std::string latest_error();
     };
 
-    //====================================================
+    //====================================================    
+
+    std::string SocketServer::system_error(std::string const& msg)
+	{
+		return msg + ": " + strerror(errno);
+	}
+
+
+    std::string SocketServer::to_csv(std::vector<std::string> const& list)
+	{
+		const auto delim = ", ";
+
+		std::string msg = "";
+		for (auto const& err : list)
+		{
+			msg += err;
+			msg += delim;
+		}
+
+		msg.pop_back();
+		msg.pop_back();
+
+		return msg;
+	}
+
 
     bool SocketServer::init() 
     {
@@ -264,28 +291,16 @@ namespace SocketLib
         return true;
 	}
 
-    std::string SocketServer::latest_error()
-    {
-        const auto delim = ", ";
+    
 
-        std::string msg = "";
-        for(auto const& err : m_errors)
-		{
-            msg += err;
-			msg += delim;
-        }
 
-		msg.pop_back();
-		msg.pop_back();
+	std::string SocketServer::latest_error()
+	{
+		const auto msg = to_csv(m_errors);
 
-        m_errors.clear();
+		m_errors.clear();
 
 		return msg;
-    }
-
-    std::string SocketServer::system_error(std::string const& msg)
-	{
-		return msg + ": " + strerror(errno);
 	}
 
     void SocketServer::get_network_info()

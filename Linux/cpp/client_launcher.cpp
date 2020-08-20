@@ -17,6 +17,8 @@ int main(int argc, char* argv[])
     SocketLib::SocketClient client(argv[1], atoi(argv[2]));
     client.start();
 
+    std::cout << "client started" << '\n';
+
     if(client.has_error())
     {
         std::cout << client.latest_error() << '\n';
@@ -36,11 +38,7 @@ int main(int argc, char* argv[])
         {
 			client.stop();
 		}
-		
-		
 	}
 
     std::cout << client.status() << '\n';
-
-    
 }
