@@ -5,19 +5,22 @@
 #pragma comment (lib,"ws2_32.lib")
 
 #include <string>
+#include <vector>
 
 namespace MySocketLib
 {
 	// Class encapsulating WinSock server functionality
 	class SocketServer {
 	private:
-		unsigned short const PORT = 27015;
 		static int constexpr MAX_CHARS = 256;
+		unsigned short const DEFAULT_PORT = 27015;		
+		const char* DEFAULT_IP_ADDRESS = "127.0.0.1";
 
-		const char* m_ip_address = "127.0.0.1";
+		const char* m_ip_address = DEFAULT_IP_ADDRESS;
+		unsigned short m_port_no = DEFAULT_PORT;
 
-		SOCKET m_hSocket = NULL;
-		SOCKET m_hAccepted = NULL;
+		SOCKET m_srv_socket = NULL;
+		SOCKET m_cli_socket = NULL;
 		sockaddr_in m_serverAddress = { 0 };
 
 		bool m_running = false;
@@ -25,19 +28,24 @@ namespace MySocketLib
 		bool m_connected = false;
 		std::string m_status = "";
 
+		std::vector<std::string> m_errors;
+
 		bool init();
 		bool bind_socket();
 		bool listen_socket();
-		void close();
+		void close_socket();
 
 	public:
 		SocketServer() {}
-		SocketServer(const char* ip) : m_ip_address(ip) {}
+		SocketServer(unsigned short port)
+		{
+			m_port_no = port;
+		}
 
 		~SocketServer()
 		{
 			disconnect_client();
-			close();
+			close_socket();
 		}
 
 		void start();
@@ -51,6 +59,9 @@ namespace MySocketLib
 		std::string status() { return m_status; }
 		bool running() { return m_running; }
 		bool connected() { return m_connected; }
+
+		bool has_error() { return !m_errors.empty(); }
+		std::string latest_error();
 	};
 
 }

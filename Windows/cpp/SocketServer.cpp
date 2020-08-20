@@ -1,17 +1,10 @@
 #include "../hpp/SocketServer.hpp"
 
-#include <vector>
 #include <sstream>
 #include <cassert>
 
 namespace MySocketLib
 {
-	/*
-	*        Purpose: Initializes WSA, TCP socket and the server address
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Returns false if a problem occured during initialization
-	*/
 	bool SocketServer::init()
 	{
 		// initialize WSA
@@ -19,53 +12,46 @@ namespace MySocketLib
 		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (iResult != 0) {
 			m_status = "Server WSAStartup failed : " + iResult;
+			m_errors.push_back(m_status);
 			return false;
 		}
 
 		// Create the TCP socket
-		m_hSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		m_srv_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		m_open = true;
 
 		// Create the server address
 		m_serverAddress = { 0 };
 		m_serverAddress.sin_family = AF_INET;
-		m_serverAddress.sin_port = htons(PORT);
+		m_serverAddress.sin_port = htons(m_port_no);
 		m_serverAddress.sin_addr.s_addr = inet_addr(m_ip_address);
 
 		m_status = "Server Initialized";
 		return true;
 	}
 
-	/*
-	*        Purpose: Binds server socket the server address
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Returns false if a problem occured during binding
-	*/
+
 	bool SocketServer::bind_socket()
 	{
 		// bind the socket
-		if (bind(m_hSocket, (SOCKADDR*)&m_serverAddress, sizeof(m_serverAddress)) == SOCKET_ERROR) {
-			close();
+		if (bind(m_srv_socket, (SOCKADDR*)&m_serverAddress, sizeof(m_serverAddress)) == SOCKET_ERROR) {
+			close_socket();
 			m_status = "Server bind() failed.";
+			m_errors.push_back(m_status);
 			return false;
 		}
 
 		return true;
 	}
 
-	/*
-	*        Purpose: Begins listening on socket
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Returns false and closes resources if there is a problem
-	*/
+
 	bool SocketServer::listen_socket()
 	{
 		m_running = false;
-		if (listen(m_hSocket, 1) == SOCKET_ERROR) {
-			close();
+		if (listen(m_srv_socket, 1) == SOCKET_ERROR) {
+			close_socket();
 			m_status = "Server error listening on socket";
+			m_errors.push_back(m_status);
 			return false;
 		}
 
@@ -74,25 +60,21 @@ namespace MySocketLib
 		return true;
 	}
 
-	/*
-	*        Purpose: Waits until connects with client
-	*     Parameters: None
-	*  Preconditions: Server is running
-	* Postconditions: Returns true if successful
-	*/
+
 	bool SocketServer::connect_client()
 	{
 		if (!m_running) {
 			m_status = "Server cannot connect, server not running";
+			m_errors.push_back(m_status);
 			return false;
 		}
 
 		m_status = "Server waiting for client";
 
 		m_connected = false;
-		m_hAccepted = SOCKET_ERROR;
-		while (m_hAccepted == SOCKET_ERROR) {
-			m_hAccepted = accept(m_hSocket, NULL, NULL);
+		m_cli_socket = SOCKET_ERROR;
+		while (m_cli_socket == SOCKET_ERROR) {
+			m_cli_socket = accept(m_srv_socket, NULL, NULL);
 		}
 
 		m_status = "Server connected to client";
@@ -101,82 +83,47 @@ namespace MySocketLib
 		return true;
 	}
 
-	/*
-	*        Purpose: Attempts to initialize the server and listen on the socket
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Server is running if successful
-	*/
+
 	void SocketServer::start()
 	{
 		bool result = init();
 
-		if (!result)
-			return;
-
-		result = bind_socket();
-
-		if (!result)
-			return;
-
-		result = listen_socket();
-
-		if (!result)
+		if (!init() || !bind_socket() || !listen_socket())
 			return;
 
 		m_running = true;
 	}
 
-	/*
-	*        Purpose: Stops the server and cleans up resources
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: server is stopped and can be restarted
-	*/
+
 	void SocketServer::stop()
 	{
 		disconnect_client();
 
 		m_running = false;
-		close();
+		close_socket();
 		m_status = "Server stopped";
 	}
 
-	/*
-	*        Purpose: Closes socket and WSA
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Resources cleaned up.  Able to reconnect.
-	*/
-	void SocketServer::close()
+
+	void SocketServer::close_socket()
 	{
 		if (m_open) {
-			closesocket(m_hSocket);
+			closesocket(m_srv_socket);
 			WSACleanup();
 			m_open = false;
 		}
 	}
 
-	/*
-	*        Purpose: Disconnects from the client
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Client disconnected but still running.
-	*/
+
 	void SocketServer::disconnect_client()
 	{
 		if (m_connected) {
-			closesocket(m_hAccepted);
+			closesocket(m_cli_socket);
 			m_connected = false;
 		}
 	}
 
-	/*
-	*        Purpose: Waits for a message from the client
-	*     Parameters: None
-	*  Preconditions: Server is running and connected to client
-	* Postconditions: Returns the message when received
-	*/
+
 	std::string SocketServer::receive_text()
 	{
 		assert(m_running);
@@ -187,7 +134,7 @@ namespace MySocketLib
 		std::ostringstream oss;
 
 		while (waiting) {
-			int bytesRecv = recv(m_hAccepted, recvbuf, MAX_CHARS, 0);
+			int bytesRecv = recv(m_cli_socket, recvbuf, MAX_CHARS, 0);
 			if (bytesRecv > 0) {
 				waiting = false;
 				oss << recvbuf;
@@ -197,12 +144,7 @@ namespace MySocketLib
 		return oss.str();
 	}
 
-	/*
-	*        Purpose: Sends a string of text to the client
-	*     Parameters: The text to send
-	*  Preconditions: Server is running and connected to client
-	* Postconditions: Message is sent
-	*/
+
 	void SocketServer::send_text(std::string const& text)
 	{
 		assert(m_running);
@@ -212,7 +154,35 @@ namespace MySocketLib
 
 		std::vector<char> data(text.begin(), text.end());
 
-		int bytesSent = send(m_hAccepted, data.data(), static_cast<int>(data.size()), 0);
+		int bytesSent = send(m_cli_socket, data.data(), static_cast<int>(data.size()), 0);
+	}
+
+
+	static std::string to_csv(std::vector<std::string> const& list)
+	{
+		const auto delim = ", ";
+
+		std::string msg = "";
+		for (auto const& err : list)
+		{
+			msg += err;
+			msg += delim;
+		}
+
+		msg.pop_back();
+		msg.pop_back();
+
+		return msg;
+	}
+
+
+	std::string SocketServer::latest_error()
+	{
+		const auto msg = to_csv(m_errors);
+
+		m_errors.clear();
+
+		return msg;
 	}
 
 }

@@ -47,7 +47,7 @@ bool end_session_msg(std::string const& msg)
 
 void start_server()
 {
-	msl::SocketServer server("127.0.0.1");
+	msl::SocketServer server;
 
 	server.start();
 	print_line(server.status());

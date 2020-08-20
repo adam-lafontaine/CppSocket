@@ -24,7 +24,7 @@ namespace MySocketLib
 		m_serverAddress = { 0 };
 		m_serverAddress.sin_family = AF_INET;
 		m_serverAddress.sin_port = htons(m_srv_port_no);
-		m_serverAddress.sin_addr.s_addr = inet_addr(m_srv_ip_address);
+		m_serverAddress.sin_addr.s_addr = inet_addr(m_srv_ip);
 
 		m_open = true;
 
@@ -126,12 +126,12 @@ namespace MySocketLib
 	}
 
 
-	std::string SocketClient::latest_error()
+	static std::string to_csv(std::vector<std::string> const& list)
 	{
 		const auto delim = ", ";
 
 		std::string msg = "";
-		for (auto const& err : m_errors)
+		for (auto const& err : list)
 		{
 			msg += err;
 			msg += delim;
@@ -139,6 +139,14 @@ namespace MySocketLib
 
 		msg.pop_back();
 		msg.pop_back();
+
+		return msg;
+	}
+
+
+	std::string SocketClient::latest_error()
+	{
+		const auto msg = to_csv(m_errors);
 
 		m_errors.clear();
 

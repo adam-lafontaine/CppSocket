@@ -18,8 +18,8 @@ namespace MySocketLib
 		unsigned short const DEFAULT_PORT = 27015;		
 		const char* DEFAULT_IP_ADDRESS = "127.0.0.1";
 
-		const char* m_srv_ip_address;
-		unsigned short m_srv_port_no;
+		const char* m_srv_ip = DEFAULT_IP_ADDRESS;
+		unsigned short m_srv_port_no = DEFAULT_PORT;
 
 		SOCKET m_socket = NULL;
 		sockaddr_in m_serverAddress = { 0 };
@@ -35,21 +35,17 @@ namespace MySocketLib
 		void close_socket();
 
 	public:
-		SocketClient()
-		{
-			m_srv_ip_address = DEFAULT_IP_ADDRESS;
-			m_srv_port_no = DEFAULT_PORT;
-		}
+		SocketClient() {}
 
 		SocketClient(const char* ip, unsigned short srv_port)
 		{
-			m_srv_ip_address = ip;
+			m_srv_ip = ip;
 			m_srv_port_no = srv_port;
 		}
 
 		SocketClient(std::string const& ip, unsigned short srv_port)
 		{
-			m_srv_ip_address = ip.c_str();
+			m_srv_ip = ip.c_str();
 			m_srv_port_no = srv_port;
 		}
 
