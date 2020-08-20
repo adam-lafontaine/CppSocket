@@ -48,6 +48,8 @@ namespace MySocketLib
 			close_socket();
 		}
 
+		void set_port(unsigned port) { m_port_no = port; }
+
 		void start();
 		void stop();
 		bool connect_client();
