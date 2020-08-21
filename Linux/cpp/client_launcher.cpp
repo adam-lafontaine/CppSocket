@@ -3,14 +3,14 @@
 #include "../hpp/SocketClient.hpp"
 
 
-// g++ -o client client_launcher.cpp
+// g++ -o client client_launcher.cpp -std=c++17
 // ./client
 
 int main(int argc, char* argv[])
 {
     if(argc < 3)
     {
-        std::cout << "Usage: " << argv[0] << " " << "hostname port" << '\n';
+        std::cout << "Usage: " << argv[0] << " " << "IP port" << '\n';
         return 0;
     }
 
@@ -36,11 +36,7 @@ int main(int argc, char* argv[])
         {
 			client.stop();
 		}
-		
-		
 	}
 
     std::cout << client.status() << '\n';
-
-    
 }

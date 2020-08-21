@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netdb.h> 
+#include <netdb.h>
 
 #include<vector>
 #include<sstream>
@@ -19,45 +19,44 @@ namespace SocketLib
     private:
 		unsigned short const DEFAULT_PORT = 27015;
         static int constexpr MAX_CHARS = 256;
-        const char* DEFAULT_HOST = "localhost";
-		
-        const char* m_srv_hostname;
 
-        unsigned short m_srv_port_no;
+		const char* DEFAULT_IP_ADDRESS = "127.0.0.1";
+
+		const char* m_srv_ip = DEFAULT_IP_ADDRESS;
+        unsigned short m_srv_port_no = DEFAULT_PORT;
+		
         int m_socket; // socket file descriptor
 
-        struct sockaddr_in m_srv_addr; // contains server address
+        struct sockaddr_in m_srv_addr = { 0 }; // contains server address
         struct hostent* m_srv_ptr;   // pointer to server info
 
 		bool m_running = false;
 		bool m_open = false;
 		std::string m_status = "";
 
+		std::vector<std::string> m_errors;
+
         bool init();
 		bool connect_socket();		
 		void close_socket();
 
+		// TODO: move to helpers
 		std::string system_error(std::string const& msg);
-
-		std::vector<std::string> m_errors;
-		
+		std::string to_csv(std::vector<std::string> const& list);
 
 	public:
-		SocketClient()
-		{ 
-			m_srv_hostname = DEFAULT_HOST;
-			m_srv_port_no = DEFAULT_PORT;
-		 }
 
-		SocketClient(std::string const& srv_hostname, unsigned short srv_port)
+		SocketClient() {}
+
+		SocketClient(const char* ip, unsigned short srv_port)
 		{
-			m_srv_hostname = srv_hostname.c_str();
+			m_srv_ip = ip;
 			m_srv_port_no = srv_port;
 		}
 
-		SocketClient(const char* srv_hostname, unsigned short srv_port)
+		SocketClient(std::string const& ip, unsigned short srv_port)
 		{
-			m_srv_hostname = srv_hostname;
+			m_srv_ip = ip.c_str();
 			m_srv_port_no = srv_port;
 		}
 
@@ -77,6 +76,30 @@ namespace SocketLib
 
     //========================================
 
+	// TODO: move to helpers
+	std::string SocketClient::system_error(std::string const& msg)
+	{
+		return msg + ": " + strerror(errno);
+	}
+
+	// TODO: move to helpers
+	std::string SocketClient::to_csv(std::vector<std::string> const& list)
+	{
+		const auto delim = ", ";
+
+		std::string msg = "";
+		for (auto const& err : list)
+		{
+			msg += err;
+			msg += delim;
+		}
+
+		msg.pop_back();
+		msg.pop_back();
+
+		return msg;
+	}
+
     bool SocketClient::init()
 	{
         m_socket = socket(AF_INET, SOCK_STREAM, 0);  // create socket
@@ -84,29 +107,20 @@ namespace SocketLib
         if (m_socket < 0)
 		{
             m_status = "ERROR opening socket";
-			m_errors.push_back(system_error(m_status));
-            return false;
-        }		
-
-        m_srv_ptr = gethostbyname(m_srv_hostname);
-
-        if(m_srv_ptr == NULL)
-		{
-            m_status = "ERROR host not found";
-			m_errors.push_back(system_error(m_status));
+			m_errors.push_back(m_status);
             return false;
         }
 
-        // populate serv_addr
-        bzero((char *) &m_srv_addr, sizeof(m_srv_addr)); // initialize to zeros
+		// populate serv_addr
+		m_srv_addr.sin_family = AF_INET;
+		m_srv_addr.sin_port = htons(m_srv_port_no);
 
-        m_srv_addr.sin_family = AF_INET;    
-
-        // copy server address bytes to serv_addr
-        bcopy((char *)m_srv_ptr->h_addr_list[0], (char *)&m_srv_addr.sin_addr.s_addr, m_srv_ptr->h_length);
-        // #define h_addr  h_addr_list[0]  /* address, for backward compatiblity */		
-
-        m_srv_addr.sin_port = htons(m_srv_port_no);            
+		if(inet_pton(AF_INET, m_srv_ip, &m_srv_addr.sin_addr) < 0)
+		{
+			m_status = "Could not get server address";
+			m_errors.push_back(m_status);
+			return false;
+		}    
 
         m_open = true;
 
@@ -116,7 +130,7 @@ namespace SocketLib
     }
 
     bool SocketClient::connect_socket()
-	{
+	{		
         if (!m_open)
 		{
 			m_status = "Client not initialized.";
@@ -124,12 +138,12 @@ namespace SocketLib
 		}
 
         // connect the socket
-        int res = connect(m_socket,(struct sockaddr *) &m_srv_addr,sizeof(m_srv_addr));		
+        int res = connect(m_socket,(struct sockaddr *) &m_srv_addr,sizeof(m_srv_addr));
 		
 		if (res < 0)
 		{
 			m_status = "ERROR Client connect failed";
-			m_errors.push_back(system_error(m_status));
+			m_errors.push_back(m_status);
 			close_socket();
 			return false;
 		}
@@ -173,7 +187,7 @@ namespace SocketLib
         if (n_chars < 0)
 		{
             m_status = "ERROR writing to socket";
-			m_errors.push_back(system_error(m_status));
+			m_errors.push_back(m_status);
             return false;
         }
 
@@ -185,7 +199,6 @@ namespace SocketLib
 		assert(m_running);
 
 		char buffer[MAX_CHARS]; // characters are read into this buffer
-        ssize_t n_chars; // number of characters read or written
 
         bool waiting = true;
 		std::ostringstream oss;
@@ -194,7 +207,7 @@ namespace SocketLib
 
 		while (waiting)
 		{
-			n_chars = read(m_socket, buffer, MAX_CHARS - 1);
+			auto n_chars = read(m_socket, buffer, MAX_CHARS - 1);
 			if (n_chars > 0)
 			{
 				waiting = false;
@@ -205,29 +218,19 @@ namespace SocketLib
 		return oss.str();
 	}
 
+	
+
+
 	std::string SocketClient::latest_error()
 	{
-        const auto delim = ", ";
-
-		std::string msg = "";
-        for(auto const& err : m_errors)
-		{
-            msg += err;
-			msg += delim;
-        }
-
-		msg.pop_back();
-		msg.pop_back();
+		const auto msg = to_csv(m_errors);
 
 		m_errors.clear();
 
 		return msg;
-    }
-
-	std::string SocketClient::system_error(std::string const& msg)
-	{
-		return msg + ": " + strerror(errno);
 	}
+
+	
 }
 
 /*
