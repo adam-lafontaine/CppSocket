@@ -10,7 +10,8 @@ namespace MySocketLib
 		// initialize WSA
 		WSAData wsaData;
 		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-		if (iResult != 0) {
+		if (iResult != 0)
+		{
 			m_status = "Server WSAStartup failed : " + iResult;
 			m_errors.push_back(m_status);
 			return false;
@@ -21,10 +22,10 @@ namespace MySocketLib
 		m_open = true;
 
 		// Create the server address
-		m_serverAddress = { 0 };
-		m_serverAddress.sin_family = AF_INET;
-		m_serverAddress.sin_port = htons(m_port_no);
-		m_serverAddress.sin_addr.s_addr = inet_addr(m_ip_address);
+		m_srv_addr = { 0 };
+		m_srv_addr.sin_family = AF_INET;
+		m_srv_addr.sin_port = htons(m_port_no);
+		m_srv_addr.sin_addr.s_addr = inet_addr(m_public_ip.c_str());
 
 		m_status = "Server Initialized";
 		return true;
@@ -34,7 +35,8 @@ namespace MySocketLib
 	bool SocketServer::bind_socket()
 	{
 		// bind the socket
-		if (bind(m_srv_socket, (SOCKADDR*)&m_serverAddress, sizeof(m_serverAddress)) == SOCKET_ERROR) {
+		if (bind(m_srv_socket, (SOCKADDR*)&m_srv_addr, sizeof(m_srv_addr)) == SOCKET_ERROR)
+		{
 			close_socket();
 			m_status = "Server bind() failed.";
 			m_errors.push_back(m_status);
@@ -49,7 +51,8 @@ namespace MySocketLib
 	{
 		m_running = false;
 		const auto port = std::to_string(m_port_no);
-		if (listen(m_srv_socket, 1) == SOCKET_ERROR) {
+		if (listen(m_srv_socket, 1) == SOCKET_ERROR)
+		{
 			close_socket();
 			m_status = "Server error listening on socket";
 			m_errors.push_back(m_status);
@@ -64,7 +67,8 @@ namespace MySocketLib
 
 	bool SocketServer::connect_client()
 	{
-		if (!m_running) {
+		if (!m_running)
+		{
 			m_status = "Server cannot connect, server not running";
 			m_errors.push_back(m_status);
 			return false;
@@ -74,7 +78,8 @@ namespace MySocketLib
 
 		m_connected = false;
 		m_cli_socket = SOCKET_ERROR;
-		while (m_cli_socket == SOCKET_ERROR) {
+		while (m_cli_socket == SOCKET_ERROR)
+		{
 			m_cli_socket = accept(m_srv_socket, NULL, NULL);
 		}
 
@@ -108,7 +113,8 @@ namespace MySocketLib
 
 	void SocketServer::close_socket()
 	{
-		if (m_open) {
+		if (m_open)
+		{
 			closesocket(m_srv_socket);
 			WSACleanup();
 			m_open = false;
@@ -118,7 +124,8 @@ namespace MySocketLib
 
 	void SocketServer::disconnect_client()
 	{
-		if (m_connected) {
+		if (m_connected)
+		{
 			closesocket(m_cli_socket);
 			m_connected = false;
 		}
@@ -134,7 +141,8 @@ namespace MySocketLib
 		bool waiting = true;
 		std::ostringstream oss;
 
-		while (waiting) {
+		while (waiting)
+		{
 			int bytesRecv = recv(m_cli_socket, recvbuf, MAX_CHARS, 0);
 			if (bytesRecv > 0) {
 				waiting = false;

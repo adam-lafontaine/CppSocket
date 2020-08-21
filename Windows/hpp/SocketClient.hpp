@@ -22,7 +22,7 @@ namespace MySocketLib
 		unsigned short m_srv_port_no = DEFAULT_PORT;
 
 		SOCKET m_socket = NULL;
-		sockaddr_in m_serverAddress = { 0 };
+		sockaddr_in m_srv_addr = { 0 };
 
 		bool m_running = false;
 		bool m_open = false;

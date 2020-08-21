@@ -21,10 +21,10 @@ namespace MySocketLib
 		m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);		
 
 		// Create the server address
-		m_serverAddress = { 0 };
-		m_serverAddress.sin_family = AF_INET;
-		m_serverAddress.sin_port = htons(m_srv_port_no);
-		m_serverAddress.sin_addr.s_addr = inet_addr(m_srv_ip);
+		m_srv_addr = { 0 };
+		m_srv_addr.sin_family = AF_INET;
+		m_srv_addr.sin_port = htons(m_srv_port_no);
+		m_srv_addr.sin_addr.s_addr = inet_addr(m_srv_ip);
 
 		m_open = true;
 
@@ -52,7 +52,7 @@ namespace MySocketLib
 		}
 
 		// connect the socket
-		if (connect(m_socket, (SOCKADDR*)&m_serverAddress, sizeof(m_serverAddress)) == SOCKET_ERROR) {
+		if (connect(m_socket, (SOCKADDR*)&m_srv_addr, sizeof(m_srv_addr)) == SOCKET_ERROR) {
 			m_status = "Client Connect() failed";
 			m_errors.push_back(m_status);
 			close_socket();

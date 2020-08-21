@@ -8,22 +8,19 @@
 #include <vector>
 
 namespace MySocketLib
-{
-	// Class encapsulating WinSock server functionality
-	class SocketServer {
+{	
+	class SocketServer
+	{
 	private:
 		static int constexpr MAX_CHARS = 256;
-		unsigned short const DEFAULT_PORT = 27015;		
-		const char* DEFAULT_IP_ADDRESS = "10.0.0.37";
-
-		const char* m_ip_address = DEFAULT_IP_ADDRESS;
-		unsigned short m_port_no = DEFAULT_PORT;
+		unsigned short const DEFAULT_PORT = 27015;	
 
 		std::string m_public_ip = "NA";
+		unsigned short m_port_no = DEFAULT_PORT;
 
 		SOCKET m_srv_socket = NULL;
 		SOCKET m_cli_socket = NULL;
-		sockaddr_in m_serverAddress = { 0 };
+		struct sockaddr_in m_srv_addr = { 0 }; // contains server address
 
 		bool m_running = false;
 		bool m_open = false;
