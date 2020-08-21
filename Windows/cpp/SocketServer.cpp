@@ -48,6 +48,7 @@ namespace MySocketLib
 	bool SocketServer::listen_socket()
 	{
 		m_running = false;
+		const auto port = std::to_string(m_port_no);
 		if (listen(m_srv_socket, 1) == SOCKET_ERROR) {
 			close_socket();
 			m_status = "Server error listening on socket";
@@ -55,7 +56,7 @@ namespace MySocketLib
 			return false;
 		}
 
-		m_status = "Server started";
+		m_status = "Listening on " + m_public_ip + " : " + port;
 
 		return true;
 	}
@@ -183,6 +184,34 @@ namespace MySocketLib
 		m_errors.clear();
 
 		return msg;
+	}
+
+
+	void SocketServer::get_network_info()
+	{
+		WORD wVersionRequested;
+		WSADATA wsaData;
+		char Name[255];
+		PHOSTENT HostInfo;
+		wVersionRequested = MAKEWORD(1, 1);
+
+		if (WSAStartup(wVersionRequested, &wsaData) == 0)
+		{
+			if (gethostname(Name, sizeof(Name)) == 0)
+			{
+				//printf("Host name: %s\n", name);
+				if ((HostInfo = gethostbyname(Name)) != NULL)
+				{
+					int nCount = 0;
+					while (HostInfo->h_addr_list[nCount])
+					{
+						m_public_ip = std::string(inet_ntoa(*(struct in_addr*)HostInfo->h_addr_list[nCount]));
+
+						++nCount;
+					}
+				}
+			}
+		}
 	}
 
 }

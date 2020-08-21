@@ -14,10 +14,12 @@ namespace MySocketLib
 	private:
 		static int constexpr MAX_CHARS = 256;
 		unsigned short const DEFAULT_PORT = 27015;		
-		const char* DEFAULT_IP_ADDRESS = "127.0.0.1";
+		const char* DEFAULT_IP_ADDRESS = "10.0.0.37";
 
 		const char* m_ip_address = DEFAULT_IP_ADDRESS;
 		unsigned short m_port_no = DEFAULT_PORT;
+
+		std::string m_public_ip = "NA";
 
 		SOCKET m_srv_socket = NULL;
 		SOCKET m_cli_socket = NULL;
@@ -30,16 +32,22 @@ namespace MySocketLib
 
 		std::vector<std::string> m_errors;
 
+		void get_network_info();
+
 		bool init();
 		bool bind_socket();
 		bool listen_socket();
 		void close_socket();
 
 	public:
-		SocketServer() {}
+		SocketServer() 
+		{
+			get_network_info();
+		}
 		SocketServer(unsigned short port)
 		{
 			m_port_no = port;
+			get_network_info();
 		}
 
 		~SocketServer()
