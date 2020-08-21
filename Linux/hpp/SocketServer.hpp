@@ -78,8 +78,6 @@ namespace SocketLib
         bool connect_client();
         void disconnect_client();
 
-
-
         std::string receive_text();
         bool send_text(std::string const& text);        
 

@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h> 
+#include <arpa/inet.h>
 
 #include<vector>
 #include<sstream>
@@ -19,9 +20,6 @@ namespace SocketLib
     private:
 		unsigned short const DEFAULT_PORT = 27015;
         static int constexpr MAX_CHARS = 256;
-        //const char* DEFAULT_HOST = "localhost";
-		
-        //const char* m_srv_hostname = DEFAULT_HOST;
 
 		const char* DEFAULT_IP_ADDRESS = "127.0.0.1";
 
@@ -132,10 +130,17 @@ namespace SocketLib
 			m_errors.push_back(system_error(m_status));
             return false;
         }
+		
+		struct in_addr ip;
+		struct hostent *hp;
 
-        m_srv_ptr = gethostbyname("localhost"/*m_srv_hostname*/);
-
-		//m_srv_ptr = gethostbyaddr(m_srv_ip, sizeof(struct in_addr), AF_INET);
+		if (!inet_aton(m_srv_ip, &ip))
+		{
+			m_status = std::string("Could not parse IP address ") + m_srv_ip;
+			m_errors.push_back(system_error(m_status));
+		}
+		
+        m_srv_ptr = gethostbyaddr((const void *)&ip, sizeof ip, AF_INET);
 
         if(m_srv_ptr == NULL)
 		{

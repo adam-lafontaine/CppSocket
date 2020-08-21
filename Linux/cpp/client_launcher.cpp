@@ -10,14 +10,12 @@ int main(int argc, char* argv[])
 {
     if(argc < 3)
     {
-        std::cout << "Usage: " << argv[0] << " " << "hostname port" << '\n';
+        std::cout << "Usage: " << argv[0] << " " << "IP port" << '\n';
         return 0;
     }
 
     SocketLib::SocketClient client(argv[1], atoi(argv[2]));
     client.start();
-
-    std::cout << "client started" << '\n';
 
     if(client.has_error())
     {
