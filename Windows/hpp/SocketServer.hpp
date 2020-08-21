@@ -1,64 +1,74 @@
-/*
-*    Authors: Adam Lafontaine, Yougui Chen
-*     Course: INFO 5104
-* Assignment: Project 3, Socket Library
-*       Date: January 9, 2018
-*
-*       File: SocketServer.hpp
-*/
-
 #pragma once
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
-#include <string>
-using namespace std;
 
 #include <WinSock2.h>
 #pragma comment (lib,"ws2_32.lib")
 
-namespace MySocketLib {
+#include <string>
+#include <vector>
 
-	// Class encapsulating WinSock server functionality
-	class SocketServer {
+namespace MySocketLib
+{	
+	class SocketServer
+	{
 	private:
-		unsigned short const PORT = 27015;
 		static int constexpr MAX_CHARS = 256;
+		unsigned short const DEFAULT_PORT = 27015;	
 
-		char* _ip_address = "127.0.0.1";
+		std::string m_public_ip = "NA";
+		unsigned short m_port_no = DEFAULT_PORT;
 
-		SOCKET _hSocket;
-		SOCKET _hAccepted;
-		sockaddr_in _serverAddress;
+		SOCKET m_srv_socket = NULL;
+		SOCKET m_cli_socket = NULL;
+		struct sockaddr_in m_srv_addr = { 0 }; // contains server address
 
-		bool _running = false;
-		bool _open = false;
-		bool _connected = false;
-		string _status = "";
+		bool m_running = false;
+		bool m_open = false;
+		bool m_connected = false;
+		std::string m_status = "";
+
+		std::vector<std::string> m_errors;
+
+		void get_network_info();
 
 		bool init();
 		bool bind_socket();
 		bool listen_socket();
-		void close();
+		void close_socket();
 
 	public:
-		SocketServer() {}
-		SocketServer(char* ip) : _ip_address(ip) {}
-
-		~SocketServer() {
-			disconnect_client();
-			close();
+		SocketServer() 
+		{
+			get_network_info();
 		}
+		SocketServer(unsigned short port)
+		{
+			m_port_no = port;
+			get_network_info();
+		}
+
+		~SocketServer()
+		{
+			disconnect_client();
+			close_socket();
+		}
+
+		void set_port(unsigned port) { m_port_no = port; }
 
 		void start();
 		void stop();
 		bool connect_client();
 		void disconnect_client();
 
-		string receive_text();
-		void send_text(string const& text);
+		std::string receive_text();
+		void send_text(std::string const& text);
 
-		string status() { return _status; }
-		bool running() { return _running; }
-		bool connected() { return _connected; }
+		std::string status() { return m_status; }
+		bool running() { return m_running; }
+		bool connected() { return m_connected; }
+
+		bool has_error() { return !m_errors.empty(); }
+		std::string latest_error();
 	};
 
 }

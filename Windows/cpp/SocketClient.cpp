@@ -1,94 +1,70 @@
-/*
-*    Authors: Adam Lafontaine, Yougui Chen
-*     Course: INFO 5104
-* Assignment: Project 3, Socket Library
-*       Date: January 9, 2018
-*
-*       File: SocketClient.cpp
-*/
+#include "../hpp/SocketClient.hpp"
 
-#include<SocketClient.hpp>
-#include<vector>
-#include<sstream>
-#include<cassert>
+#include <sstream>
+#include <cassert>
 
-namespace MySocketLib {
 
-	/*
-	*        Purpose: Initializes WSA, TCP socket and the server address
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Returns false if a problem occured during initialization
-	*/
-	bool SocketClient::init() {
+namespace MySocketLib
+{	
+	bool SocketClient::init()
+	{
 		// initialize WSA
 		WSAData wsaData;
 		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (iResult != 0) {
-			_status = "Client WSAStartup failed: " + iResult;
+			m_status = "Client WSAStartup failed: " + iResult;
+			m_errors.push_back(m_status);
 			return false;
 		}
 
 		// Create the TCP socket
-		_hSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);		
+		m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);		
 
 		// Create the server address
-		_serverAddress = { 0 };
-		_serverAddress.sin_family = AF_INET;
-		_serverAddress.sin_port = htons(PORT);
-		_serverAddress.sin_addr.s_addr = inet_addr(_ip_address);
+		m_srv_addr = { 0 };
+		m_srv_addr.sin_family = AF_INET;
+		m_srv_addr.sin_port = htons(m_srv_port_no);
+		m_srv_addr.sin_addr.s_addr = inet_addr(m_srv_ip);
 
-		_open = true;
+		m_open = true;
 
-		_status = "Client Initialized";
+		m_status = "Client Initialized";
 		return true;
 	}
 
-	/*
-	*        Purpose: Closes socket and WSA
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Resources cleaned up.  Able to reconnect.
-	*/
-	void SocketClient::close() {
-		if (!_open)
+
+	void SocketClient::close_socket()
+	{
+		if (!m_open)
 			return;
 
-		closesocket(_hSocket);
+		closesocket(m_socket);
 		WSACleanup();
-		_open = false;
+		m_open = false;
 	}
 
-	/*
-	*        Purpose: Connects the client to the server
-	*     Parameters: None
-	*  Preconditions: Client has been initialized
-	* Postconditions: Returns true if successful, false if not
-	*/
-	bool SocketClient::connect_socket() {
 
-		if (!_open) {
-			_status = "Client not initialized.";
+	bool SocketClient::connect_socket()
+	{
+		if (!m_open) {
+			m_status = "Client not initialized.";
 			return false;
 		}
 
 		// connect the socket
-		if (connect(_hSocket, (SOCKADDR*)&_serverAddress, sizeof(_serverAddress)) == SOCKET_ERROR) {
-			_status = "Client Connect() failed";
-			close();
+		if (connect(m_socket, (SOCKADDR*)&m_srv_addr, sizeof(m_srv_addr)) == SOCKET_ERROR) {
+			m_status = "Client Connect() failed";
+			m_errors.push_back(m_status);
+			close_socket();
 			return false;
 		}
 
 		return true;
 	}
 
-	/*
-	*        Purpose: Attempts to initialize the client and connect to the server
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Client is running if successful
-	*/
-	void SocketClient::start() {
+
+	void SocketClient::start()
+	{
 		if (!init()) {			
 			return;
 		}
@@ -97,60 +73,84 @@ namespace MySocketLib {
 			return;
 		}
 
-		_running = true;
-		_status = "Client started";
+		m_running = true;
+		m_status = "Client started";
 	}
 
-	/*
-	*        Purpose: Stops the client and cleans up resources
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Client is stopped and can be restarted
-	*/
-	void SocketClient::stop() {
-		_running = false;
-		close();
-		_status = "Client stopped";
+
+	void SocketClient::stop()
+	{
+		m_running = false;
+		close_socket();
+		m_status = "Client stopped";
 	}
 
-	/*
-	*        Purpose: Sends a string of text to the server
-	*     Parameters: The text to send
-	*  Preconditions: Client is running and connected to server
-	* Postconditions: Message is sent
-	*/
-	void SocketClient::send_text(string const& text) {
-		assert(_running);
-		if (!_running)
-			return;
 
-		vector<char> data(text.begin(), text.end());
+	bool SocketClient::send_text(std::string const& text)
+	{
+		assert(m_running);
+		if (!m_running)
+			return false;
 
-		int bytesSent = send(_hSocket, data.data(), static_cast<int>(data.size()), 0);
+		auto n_chars = send(m_socket, text.data(), static_cast<int>(text.size()), 0);
+
+		if (n_chars < 0)
+		{
+			m_status = "ERROR writing to socket";
+			m_errors.push_back(m_status);
+			return false;
+		}
+
+		return true;
 	}
 
-	/*
-	*        Purpose: Waits for a message from the server
-	*     Parameters: None
-	*  Preconditions: Client is running and connected to server
-	* Postconditions: Returns the message when received
-	*/
-	string SocketClient::receive_text() {
-		assert(_running);
+
+	std::string SocketClient::receive_text()
+	{
+		assert(m_running);
 
 		char recvbuf[MAX_CHARS] = "";
+
 		bool waiting = true;
-		ostringstream oss;
+		std::ostringstream oss;
 
 		while (waiting) {
-			int bytesRecv = recv(_hSocket, recvbuf, MAX_CHARS, 0);
-			if (bytesRecv > 0) {
+			auto n_chars = recv(m_socket, recvbuf, MAX_CHARS, 0);
+			if (n_chars > 0) {
 				waiting = false;
 				oss << recvbuf;
 			}
 		}
 
 		return oss.str();
+	}
+
+
+	static std::string to_csv(std::vector<std::string> const& list)
+	{
+		const auto delim = ", ";
+
+		std::string msg = "";
+		for (auto const& err : list)
+		{
+			msg += err;
+			msg += delim;
+		}
+
+		msg.pop_back();
+		msg.pop_back();
+
+		return msg;
+	}
+
+
+	std::string SocketClient::latest_error()
+	{
+		const auto msg = to_csv(m_errors);
+
+		m_errors.clear();
+
+		return msg;
 	}
 
 }

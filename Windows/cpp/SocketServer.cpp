@@ -1,195 +1,149 @@
-/*
-*    Authors: Adam Lafontaine, Yougui Chen
-*     Course: INFO 5104
-* Assignment: Project 3, Socket Library
-*       Date: January 9, 2018
-*
-*       File: SocketServer.cpp
-*/
+#include "../hpp/SocketServer.hpp"
 
-#include<SocketServer.hpp>
-#include<vector>
-#include<sstream>
-#include<cassert>
+#include <sstream>
+#include <cassert>
 
-namespace MySocketLib {
-
-	/*
-	*        Purpose: Initializes WSA, TCP socket and the server address
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Returns false if a problem occured during initialization
-	*/
-	bool SocketServer::init() {
+namespace MySocketLib
+{
+	bool SocketServer::init()
+	{
 		// initialize WSA
 		WSAData wsaData;
 		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-		if (iResult != 0) {
-			_status = "Server WSAStartup failed : " + iResult;
+		if (iResult != 0)
+		{
+			m_status = "Server WSAStartup failed : " + iResult;
+			m_errors.push_back(m_status);
 			return false;
 		}
 
 		// Create the TCP socket
-		_hSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		_open = true;
+		m_srv_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		m_open = true;
 
 		// Create the server address
-		_serverAddress = { 0 };
-		_serverAddress.sin_family = AF_INET;
-		_serverAddress.sin_port = htons(PORT);
-		_serverAddress.sin_addr.s_addr = inet_addr(_ip_address);
+		m_srv_addr = { 0 };
+		m_srv_addr.sin_family = AF_INET;
+		m_srv_addr.sin_port = htons(m_port_no);
+		m_srv_addr.sin_addr.s_addr = inet_addr(m_public_ip.c_str());
 
-		_status = "Server Initialized";
+		m_status = "Server Initialized";
 		return true;
 	}
 
-	/*
-	*        Purpose: Binds server socket the server address
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Returns false if a problem occured during binding
-	*/
-	bool SocketServer::bind_socket() {
 
+	bool SocketServer::bind_socket()
+	{
 		// bind the socket
-		if (bind(_hSocket, (SOCKADDR*)&_serverAddress, sizeof(_serverAddress)) == SOCKET_ERROR) {
-			close();
-			_status = "Server bind() failed.";
+		if (bind(m_srv_socket, (SOCKADDR*)&m_srv_addr, sizeof(m_srv_addr)) == SOCKET_ERROR)
+		{
+			close_socket();
+			m_status = "Server bind() failed.";
+			m_errors.push_back(m_status);
 			return false;
 		}
 
 		return true;
 	}
 
-	/*
-	*        Purpose: Begins listening on socket
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Returns false and closes resources if there is a problem
-	*/
-	bool SocketServer::listen_socket() {
 
-		_running = false;
-		if (listen(_hSocket, 1) == SOCKET_ERROR) {
-			close();
-			_status = "Server error listening on socket";
+	bool SocketServer::listen_socket()
+	{
+		m_running = false;
+		const auto port = std::to_string(m_port_no);
+		if (listen(m_srv_socket, 1) == SOCKET_ERROR)
+		{
+			close_socket();
+			m_status = "Server error listening on socket";
+			m_errors.push_back(m_status);
 			return false;
 		}
 
-		_status = "Server started";
+		m_status = "Listening on " + m_public_ip + " : " + port;
 
 		return true;
 	}
 
-	/*
-	*        Purpose: Waits until connects with client
-	*     Parameters: None
-	*  Preconditions: Server is running
-	* Postconditions: Returns true if successful
-	*/
-	bool SocketServer::connect_client() {
-		if (!_running) {
-			_status = "Server cannot connect, server not running";
+
+	bool SocketServer::connect_client()
+	{
+		if (!m_running)
+		{
+			m_status = "Server cannot connect, server not running";
+			m_errors.push_back(m_status);
 			return false;
 		}
 
-		_status = "Server waiting for client";
+		m_status = "Server waiting for client";
 
-		_connected = false;
-		_hAccepted = SOCKET_ERROR;
-		while (_hAccepted == SOCKET_ERROR) {
-			_hAccepted = accept(_hSocket, NULL, NULL);
+		m_connected = false;
+		m_cli_socket = SOCKET_ERROR;
+		while (m_cli_socket == SOCKET_ERROR)
+		{
+			m_cli_socket = accept(m_srv_socket, NULL, NULL);
 		}
 
-		_status = "Server connected to client";
-		_connected = true;
+		m_status = "Server connected to client";
+		m_connected = true;
 
 		return true;
 	}
 
-	/*
-	*        Purpose: Attempts to initialize the server and listen on the socket
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Server is running if successful
-	*/
-	void SocketServer::start() {
 
+	void SocketServer::start()
+	{
 		bool result = init();
 
-		if (!result)
+		if (!init() || !bind_socket() || !listen_socket())
 			return;
 
-		result = bind_socket();
-
-		if (!result)
-			return;
-
-		result = listen_socket();
-
-		if (!result)
-			return;
-
-		_running = true;
+		m_running = true;
 	}
 
-	/*
-	*        Purpose: Stops the server and cleans up resources
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: server is stopped and can be restarted
-	*/
-	void SocketServer::stop() {
+
+	void SocketServer::stop()
+	{
 		disconnect_client();
 
-		_running = false;
-		close();
-		_status = "Server stopped";
+		m_running = false;
+		close_socket();
+		m_status = "Server stopped";
 	}
 
-	/*
-	*        Purpose: Closes socket and WSA
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Resources cleaned up.  Able to reconnect.
-	*/
-	void SocketServer::close() {
-		if (_open) {
-			closesocket(_hSocket);
+
+	void SocketServer::close_socket()
+	{
+		if (m_open)
+		{
+			closesocket(m_srv_socket);
 			WSACleanup();
-			_open = false;
+			m_open = false;
 		}
 	}
 
-	/*
-	*        Purpose: Disconnects from the client
-	*     Parameters: None
-	*  Preconditions: None
-	* Postconditions: Client disconnected but still running.
-	*/
-	void SocketServer::disconnect_client() {
-		if (_connected) {
-			closesocket(_hAccepted);
-			_connected = false;
+
+	void SocketServer::disconnect_client()
+	{
+		if (m_connected)
+		{
+			closesocket(m_cli_socket);
+			m_connected = false;
 		}
 	}
 
-	/*
-	*        Purpose: Waits for a message from the client
-	*     Parameters: None
-	*  Preconditions: Server is running and connected to client
-	* Postconditions: Returns the message when received
-	*/
-	string SocketServer::receive_text() {
-		assert(_running);
-		assert(_connected);
+
+	std::string SocketServer::receive_text()
+	{
+		assert(m_running);
+		assert(m_connected);
 
 		char recvbuf[MAX_CHARS] = "";
 		bool waiting = true;
-		ostringstream oss;
+		std::ostringstream oss;
 
-		while (waiting) {
-			int bytesRecv = recv(_hAccepted, recvbuf, MAX_CHARS, 0);
+		while (waiting)
+		{
+			int bytesRecv = recv(m_cli_socket, recvbuf, MAX_CHARS, 0);
 			if (bytesRecv > 0) {
 				waiting = false;
 				oss << recvbuf;
@@ -199,21 +153,73 @@ namespace MySocketLib {
 		return oss.str();
 	}
 
-	/*
-	*        Purpose: Sends a string of text to the client
-	*     Parameters: The text to send
-	*  Preconditions: Server is running and connected to client
-	* Postconditions: Message is sent
-	*/
-	void SocketServer::send_text(string const& text) {
-		assert(_running);
-		assert(_connected);
-		if (!_running || !_connected)
+
+	void SocketServer::send_text(std::string const& text)
+	{
+		assert(m_running);
+		assert(m_connected);
+		if (!m_running || !m_connected)
 			return;
 
-		vector<char> data(text.begin(), text.end());
+		std::vector<char> data(text.begin(), text.end());
 
-		int bytesSent = send(_hAccepted, data.data(), static_cast<int>(data.size()), 0);
+		int bytesSent = send(m_cli_socket, data.data(), static_cast<int>(data.size()), 0);
+	}
+
+
+	static std::string to_csv(std::vector<std::string> const& list)
+	{
+		const auto delim = ", ";
+
+		std::string msg = "";
+		for (auto const& err : list)
+		{
+			msg += err;
+			msg += delim;
+		}
+
+		msg.pop_back();
+		msg.pop_back();
+
+		return msg;
+	}
+
+
+	std::string SocketServer::latest_error()
+	{
+		const auto msg = to_csv(m_errors);
+
+		m_errors.clear();
+
+		return msg;
+	}
+
+
+	void SocketServer::get_network_info()
+	{
+		WORD wVersionRequested;
+		WSADATA wsaData;
+		char Name[255];
+		PHOSTENT HostInfo;
+		wVersionRequested = MAKEWORD(1, 1);
+
+		if (WSAStartup(wVersionRequested, &wsaData) == 0)
+		{
+			if (gethostname(Name, sizeof(Name)) == 0)
+			{
+				//printf("Host name: %s\n", name);
+				if ((HostInfo = gethostbyname(Name)) != NULL)
+				{
+					int nCount = 0;
+					while (HostInfo->h_addr_list[nCount])
+					{
+						m_public_ip = std::string(inet_ntoa(*(struct in_addr*)HostInfo->h_addr_list[nCount]));
+
+						++nCount;
+					}
+				}
+			}
+		}
 	}
 
 }
