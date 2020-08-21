@@ -113,8 +113,6 @@ namespace SocketLib
         }
 
 		// populate serv_addr
-		//m_srv_addr = { 0 };
-        bzero((char *) &m_srv_addr, sizeof(m_srv_addr)); // initialize to zeros
 		m_srv_addr.sin_family = AF_INET;
 		m_srv_addr.sin_port = htons(m_srv_port_no);
 
