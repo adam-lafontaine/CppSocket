@@ -30,7 +30,7 @@ namespace SocketLib
         int m_srv_socket; // server socket file descriptor
         int m_cli_socket; // client socket file descriptor
 
-        struct sockaddr_in m_serv_addr = { 0 }; // contains server address
+        struct sockaddr_in m_srv_addr = { 0 }; // contains server address
         struct sockaddr_in m_cli_addr = { 0 };  // contains client address
         socklen_t m_cli_len; // size of address on client
         
@@ -128,11 +128,11 @@ namespace SocketLib
 
         m_open = true;
 
-        bzero((char *)&m_serv_addr, sizeof(m_serv_addr)); // initialize serv_addr to zeros        
+        bzero((char *)&m_srv_addr, sizeof(m_srv_addr)); // initialize serv_addr to zeros        
 
-        m_serv_addr.sin_family = AF_INET;          // always
-        m_serv_addr.sin_addr.s_addr = INADDR_ANY;  // IP address of server machine
-        m_serv_addr.sin_port = htons(m_port_no);    // convert from host to network byte order
+        m_srv_addr.sin_family = AF_INET;          // always
+        m_srv_addr.sin_addr.s_addr = INADDR_ANY;  // IP address of server machine
+        m_srv_addr.sin_port = htons(m_port_no);    // convert from host to network byte order
 
         m_status = "Server Initialized";
         return true;
@@ -141,7 +141,7 @@ namespace SocketLib
     bool SocketServer::bind_socket()
     {
         // bind socket to server address
-        const int bind_res = bind(m_srv_socket, (struct sockaddr*) &m_serv_addr, sizeof(m_serv_addr));
+        const int bind_res = bind(m_srv_socket, (struct sockaddr*) &m_srv_addr, sizeof(m_srv_addr));
 
         if (bind_res < 0)
         {
