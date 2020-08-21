@@ -25,10 +25,10 @@ namespace SocketLib
 
 		const char* m_srv_ip = DEFAULT_IP_ADDRESS;
         unsigned short m_srv_port_no = DEFAULT_PORT;
-
+		
         int m_socket; // socket file descriptor
 
-        struct sockaddr_in m_srv_addr; // contains server address
+        struct sockaddr_in m_srv_addr = { 0 }; // contains server address
         struct hostent* m_srv_ptr;   // pointer to server info
 
 		bool m_running = false;
@@ -46,25 +46,6 @@ namespace SocketLib
 		std::string to_csv(std::vector<std::string> const& list);
 
 	public:
-	/*
-		SocketClient()
-		{ 
-			m_srv_hostname = DEFAULT_HOST;
-			m_srv_port_no = DEFAULT_PORT;
-		}
-
-		SocketClient(std::string const& srv_hostname, unsigned short srv_port)
-		{
-			m_srv_hostname = srv_hostname.c_str();
-			m_srv_port_no = srv_port;
-		}
-
-		SocketClient(const char* srv_hostname, unsigned short srv_port)
-		{
-			m_srv_hostname = srv_hostname;
-			m_srv_port_no = srv_port;
-		}
-		*/
 
 		SocketClient() {}
 
@@ -127,38 +108,22 @@ namespace SocketLib
         if (m_socket < 0)
 		{
             m_status = "ERROR opening socket";
-			m_errors.push_back(system_error(m_status));
-            return false;
-        }
-		
-		struct in_addr ip;
-		struct hostent *hp;
-
-		if (!inet_aton(m_srv_ip, &ip))
-		{
-			m_status = std::string("Could not parse IP address ") + m_srv_ip;
-			m_errors.push_back(system_error(m_status));
-		}
-		
-        m_srv_ptr = gethostbyaddr((const void *)&ip, sizeof ip, AF_INET);
-
-        if(m_srv_ptr == NULL)
-		{
-            m_status = "ERROR host not found";
-			m_errors.push_back(system_error(m_status));
+			m_errors.push_back(m_status);
             return false;
         }
 
-        // populate serv_addr
+		// populate serv_addr
+		//m_srv_addr = { 0 };
         bzero((char *) &m_srv_addr, sizeof(m_srv_addr)); // initialize to zeros
+		m_srv_addr.sin_family = AF_INET;
+		m_srv_addr.sin_port = htons(m_srv_port_no);
 
-        m_srv_addr.sin_family = AF_INET;
-
-        // copy server address bytes to serv_addr
-        bcopy((char *)m_srv_ptr->h_addr_list[0], (char *)&m_srv_addr.sin_addr.s_addr, m_srv_ptr->h_length);
-        // #define h_addr  h_addr_list[0]  /* address, for backward compatiblity */		
-
-        m_srv_addr.sin_port = htons(m_srv_port_no);            
+		if(inet_pton(AF_INET, m_srv_ip, &m_srv_addr.sin_addr) < 0)
+		{
+			m_status = "Could not get server address";
+			m_errors.push_back(m_status);
+			return false;
+		}    
 
         m_open = true;
 
@@ -181,7 +146,7 @@ namespace SocketLib
 		if (res < 0)
 		{
 			m_status = "ERROR Client connect failed";
-			m_errors.push_back(system_error(m_status));
+			m_errors.push_back(m_status);
 			close_socket();
 			return false;
 		}
@@ -225,7 +190,7 @@ namespace SocketLib
         if (n_chars < 0)
 		{
             m_status = "ERROR writing to socket";
-			m_errors.push_back(system_error(m_status));
+			m_errors.push_back(m_status);
             return false;
         }
 
