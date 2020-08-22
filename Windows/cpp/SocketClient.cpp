@@ -38,7 +38,7 @@ namespace MySocketLib
 	};
 
 
-	static void create_socket(ClientSocketInfo* info, const char* ip, unsigned short port)
+	static void create_socket(ClientSocketInfo* info, const char* srv_ip, unsigned short srv_port)
 	{
 		// Create the TCP socket
 		info->socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -46,8 +46,8 @@ namespace MySocketLib
 		// Create the server address
 		info->srv_addr = { 0 };
 		info->srv_addr.sin_family = AF_INET;
-		info->srv_addr.sin_addr.s_addr = inet_addr(ip);
-		info->srv_addr.sin_port = htons(port);		
+		info->srv_addr.sin_addr.s_addr = inet_addr(srv_ip);
+		info->srv_addr.sin_port = htons(srv_port);		
 	}
 
 
@@ -106,16 +106,7 @@ namespace MySocketLib
 	}
 
 
-	void SocketClient::close_socket()
-	{
-		if (!connected())
-			return;
-
-		closesocket(m_socket_info->socket);
-		WSACleanup();
-
-		m_socket_info->connected = false;
-	}
+	
 
 
 	bool SocketClient::connect_socket()
@@ -192,23 +183,34 @@ namespace MySocketLib
 	{
 		assert(connected());
 
-		char recvbuf[MAX_CHARS] = "";
+		char buffer[MAX_CHARS] = "";
 
 		bool waiting = true;
 		std::ostringstream oss;
 
 		while (waiting)
 		{
-			auto n_chars = recv(m_socket_info->socket, recvbuf, MAX_CHARS, 0);
+			auto n_chars = recv(m_socket_info->socket, buffer, MAX_CHARS, 0);
 			if (n_chars > 0) {
 				waiting = false;
-				oss << recvbuf;
+				oss << buffer;
 			}
 		}
 
 		return oss.str();
 	}	
 
+
+	void SocketClient::close_socket()
+	{
+		if (!connected())
+			return;
+
+		closesocket(m_socket_info->socket);
+		WSACleanup();
+
+		m_socket_info->connected = false;
+	}
 
 	std::string SocketClient::latest_error()
 	{
