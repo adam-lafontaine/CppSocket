@@ -35,7 +35,7 @@ namespace MySocketLib
 		SOCKET srv_socket = NULL;
 		SOCKET cli_socket = NULL;
 
-		bool srv_connected = false;
+		bool srv_running = false;
 		bool cli_connected = false;
 		
 	};
@@ -55,31 +55,45 @@ namespace MySocketLib
 
 	void SocketServer::create_socket_info()
 	{
-		m_socket_info = new socket_info_t;
+		if(m_socket_info == nullptr)
+			m_socket_info = new socket_info_t;
+
 		create_server_socket(m_socket_info, m_public_ip.c_str(), m_port_no);
 	}
 
 
 	void SocketServer::destroy_socket_info()
 	{
-		if (m_socket_info == NULL)
+		if (m_socket_info == nullptr)
 			return;
 
 		if (m_socket_info->cli_connected)
 		{
 			closesocket(m_socket_info->cli_socket);
-			m_connected = false;
+			m_socket_info->cli_connected = false;
 		}
 
-		if (m_socket_info->srv_connected)
+		if (m_socket_info->srv_running)
 		{
 			closesocket(m_socket_info->srv_socket);
 			WSACleanup();
-			m_open = false;
+			m_socket_info->srv_running = false;
 		}
 
 		delete m_socket_info;
-		m_socket_info = NULL;
+		m_socket_info = nullptr;
+	}
+
+
+	bool SocketServer::running()
+	{
+		return m_socket_info != nullptr && m_socket_info->srv_running;
+	}
+
+
+	bool SocketServer::connected()
+	{
+		return m_socket_info != nullptr && m_socket_info->cli_connected;
 	}
 
 
@@ -122,7 +136,7 @@ namespace MySocketLib
 
 	bool SocketServer::listen_socket()
 	{
-		m_running = false;
+		m_socket_info->srv_running = false;
 		const auto port = std::to_string(m_port_no);
 		if (listen(m_socket_info->srv_socket, 1) == SOCKET_ERROR)
 		{
@@ -140,7 +154,7 @@ namespace MySocketLib
 
 	bool SocketServer::connect_client()
 	{
-		if (!m_running)
+		if (!m_socket_info->srv_running)
 		{
 			m_status = "Server cannot connect, server not running";
 			m_errors.push_back(m_status);
@@ -149,7 +163,7 @@ namespace MySocketLib
 
 		m_status = "Server waiting for client";
 
-		m_connected = false;
+		m_socket_info->cli_connected = false;
 		m_socket_info->cli_socket = SOCKET_ERROR;
 		while (m_socket_info->cli_socket == SOCKET_ERROR)
 		{
@@ -157,7 +171,7 @@ namespace MySocketLib
 		}
 
 		m_status = "Server connected to client";
-		m_connected = true;
+		m_socket_info->cli_connected = true;
 
 		return true;
 	}
@@ -165,12 +179,13 @@ namespace MySocketLib
 
 	void SocketServer::start()
 	{
-		m_running = false;
+		if(running())
+			m_socket_info->srv_running = false;
 
 		if (!init() || !bind_socket() || !listen_socket())
 			return;
 
-		m_running = true;
+		m_socket_info->srv_running = true;
 	}
 
 
@@ -178,7 +193,6 @@ namespace MySocketLib
 	{
 		disconnect_client();
 
-		m_running = false;
 		close_socket();
 		m_status = "Server stopped";
 	}
@@ -186,44 +200,43 @@ namespace MySocketLib
 
 	void SocketServer::close_socket()
 	{
-		if (!m_open)
+		if (!running())
 			return;
 
 		closesocket(m_socket_info->srv_socket);
 		WSACleanup();
-		m_open = false;
-
-		delete m_socket_info;
+		m_socket_info->srv_running = false;
 	}
 
 
 	void SocketServer::disconnect_client()
 	{
-		if (m_connected)
-		{
-			closesocket(m_socket_info->cli_socket);
-			m_connected = false;
-		}
+		if (!connected())
+			return;
+
+		closesocket(m_socket_info->cli_socket);
+		m_socket_info->cli_connected = false;
 	}
 
 
 	std::string SocketServer::receive_text()
 	{
-		assert(m_running);
-		assert(m_connected);
+		assert(m_socket_info->srv_running);
+		assert(m_socket_info->cli_connected);
 
-		char recvbuf[MAX_CHARS] = "";
-		bool waiting = true;
-		std::ostringstream oss;
+		char buffer[MAX_CHARS] = "";
 
-		while (waiting)
+		int n_chars = recv(m_socket_info->cli_socket, buffer, MAX_CHARS, 0);
+		
+		if (n_chars < 0)
 		{
-			int bytesRecv = recv(m_socket_info->cli_socket, recvbuf, MAX_CHARS, 0);
-			if (bytesRecv > 0) {
-				waiting = false;
-				oss << recvbuf;
-			}
+			m_status = "ERROR reading from client socket";
+			m_errors.push_back(m_status);
+			return "error";
 		}
+
+		std::ostringstream oss;
+		oss << buffer;
 
 		return oss.str();
 	}
@@ -231,18 +244,16 @@ namespace MySocketLib
 
 	void SocketServer::send_text(std::string const& text)
 	{
-		assert(m_running);
-		assert(m_connected);
-		if (!m_running || !m_connected)
+		assert(m_socket_info->srv_running);
+		assert(m_socket_info->cli_connected);
+
+		if (!m_socket_info->srv_running || !m_socket_info->cli_connected)
 			return;
 
 		std::vector<char> data(text.begin(), text.end());
 
 		int bytesSent = send(m_socket_info->cli_socket, data.data(), static_cast<int>(data.size()), 0);
 	}
-
-
-	
 
 
 	std::string SocketServer::latest_error()

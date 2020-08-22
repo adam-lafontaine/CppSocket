@@ -31,8 +31,10 @@ namespace MySocketLib
 {	
 	struct ClientSocketInfo
 	{
-		SOCKET socket = NULL;
 		sockaddr_in srv_addr = { 0 };
+		SOCKET socket = NULL;
+
+		bool connected = false;
 	};
 
 
@@ -49,6 +51,42 @@ namespace MySocketLib
 	}
 
 
+	void SocketClient::create_socket_info()
+	{
+		if (m_socket_info == nullptr)
+			m_socket_info = new socket_info_t;
+
+		create_socket(m_socket_info, m_srv_ip, m_srv_port_no);
+	}
+
+
+	void SocketClient::destroy_socket_info()
+	{
+		if (m_socket_info == nullptr)
+			return;
+
+		if (connected())
+		{
+			closesocket(m_socket_info->socket);
+			WSACleanup();
+		}
+
+		delete m_socket_info;
+	}
+
+
+	bool SocketClient::running()
+	{
+		return m_socket_info != nullptr;
+	}
+
+
+	bool SocketClient::connected()
+	{
+		return m_socket_info != nullptr && m_socket_info->connected;
+	}
+
+
 	bool SocketClient::init()
 	{
 		// initialize WSA
@@ -61,10 +99,7 @@ namespace MySocketLib
 			return false;
 		}
 
-		m_socket_info = new socket_info_t;
-		create_socket(m_socket_info, m_srv_ip, m_srv_port_no);
-
-		m_open = true;
+		create_socket_info();
 
 		m_status = "Client Initialized";
 		return true;
@@ -73,20 +108,19 @@ namespace MySocketLib
 
 	void SocketClient::close_socket()
 	{
-		if (!m_open)
+		if (!connected())
 			return;
 
 		closesocket(m_socket_info->socket);
 		WSACleanup();
-		m_open = false;
 
-		delete m_socket_info;
+		m_socket_info->connected = false;
 	}
 
 
 	bool SocketClient::connect_socket()
 	{
-		if (!m_open)
+		if (!running())
 		{
 			m_status = "Client not initialized.";
 			return false;
@@ -105,6 +139,8 @@ namespace MySocketLib
 			return false;
 		}
 
+		m_socket_info->connected = true;
+
 		return true;
 	}
 
@@ -114,14 +150,15 @@ namespace MySocketLib
 		if (!init() || !connect_socket())
 			return;
 
-		m_running = true;
+		assert(running());
+		assert(connected());
+		
 		m_status = "Client started";
 	}
 
 
 	void SocketClient::stop()
 	{
-		m_running = false;
 		close_socket();
 		m_status = "Client stopped";
 	}
@@ -129,11 +166,16 @@ namespace MySocketLib
 
 	bool SocketClient::send_text(std::string const& text)
 	{
-		assert(m_running);
-		if (!m_running)
+		assert(connected());
+
+		if (!connected())
 			return false;
 
-		auto n_chars = send(m_socket_info->socket, text.data(), static_cast<int>(text.size()), 0);
+		auto socket = m_socket_info->socket;
+		auto data = text.data();
+		auto size = static_cast<int>(text.size());
+
+		auto n_chars = send(socket, data, size, 0);
 
 		if (n_chars < 0)
 		{
@@ -148,7 +190,7 @@ namespace MySocketLib
 
 	std::string SocketClient::receive_text()
 	{
-		assert(m_running);
+		assert(connected());
 
 		char recvbuf[MAX_CHARS] = "";
 
@@ -165,10 +207,7 @@ namespace MySocketLib
 		}
 
 		return oss.str();
-	}
-
-
-	
+	}	
 
 
 	std::string SocketClient::latest_error()

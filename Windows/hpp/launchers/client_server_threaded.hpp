@@ -12,9 +12,8 @@
 namespace msl = MySocketLib;
 
 std::mutex console_mtx;
-bool server_running = false;
-bool client_running = false;
-
+bool server_ready = false;
+bool client_connected = false;
 
 
 void print_line(std::string const& msg)
@@ -51,10 +50,11 @@ void start_server()
 
 	server.start();
 	print_line(server.status());
-	server.connect_client();
-	print_line(server.status());
 
-	server_running = server.running() && server.connected();
+	server_ready = server.running();
+
+	server.connect_client();
+	print_line(server.status());	
 
 	// handle input from client
 	while (server.running() && server.connected())
@@ -73,25 +73,26 @@ void start_server()
 	print_line(server.status());
 	assert(!server.running());
 	assert(!server.connected());
-	server_running = server.running() && server.connected();
 }
 
 
 
 void start_client()
 {
+	while (!server_ready) {} // wait for server to start
+
 	msl::SocketClient client;
 	client.start();
 	print_line(client.status());
 
-	if (!client.running())
+	if (!client.connected())
 		return;
 
-	client_running = client.running();
+	client_connected = client.connected();
 
 	// handle user input
 	std::string text;
-	while (client.running())
+	while (client.connected())
 	{
 		std::getline(std::cin, text);
 		client.send_text(text);
@@ -109,9 +110,10 @@ void start_client()
 
 	print_line(client.status());
 
-	assert(!client.running());
+	assert(client.running());
+	assert(!client.connected());
 
-	client_running = client.running();
+	client_connected = client.connected();
 }
 
 
@@ -122,7 +124,7 @@ void client_server_threaded()
 	std::thread ts(start_server);
 	std::thread tc(start_client);
 
-	while (!server_running || !client_running) { /* wait for both processes to start */ }
+	while (!server_ready || !client_connected) { /* wait for both processes to start */ }
 	print_line("\nEnter text to send to server");
 
 	tc.join();

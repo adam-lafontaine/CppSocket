@@ -1,6 +1,6 @@
-//#define DO_CLIENT_SERVER
+#define DO_CLIENT_SERVER
 //#define DO_CLIENT
-#define DO_SERVER
+//#define DO_SERVER
 
 #ifdef DO_CLIENT_SERVER
 #include "../hpp/launchers/client_server_threaded.hpp"
@@ -28,7 +28,9 @@ int main(int argc, char *argv[])
 
 
 #ifdef DO_CLIENT_SERVER
+
 	client_server_threaded();
+
 #endif // DO_CLIENT_SERVER
 
 #ifdef DO_CLIENT
