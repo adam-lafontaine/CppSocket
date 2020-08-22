@@ -9,7 +9,7 @@
 #include <string>
 
 
-// g++ -o tester test_launcher.cpp SocketServer.cpp -std=c++17 -lpthread
+// g++ -o tester test_launcher.cpp SocketServer.cpp SocketClient.cpp -std=c++17 -lpthread
 // ./tester
 
 void run_server();
