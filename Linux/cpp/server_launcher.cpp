@@ -3,7 +3,7 @@
 #include <iostream>
 
 
-// g++ -o server server_launcher.cpp -std=c++17
+// g++ -o server server_launcher.cpp SocketServer.cpp -std=c++17
 // ./server
 
 int main(int argc, char* argv[])

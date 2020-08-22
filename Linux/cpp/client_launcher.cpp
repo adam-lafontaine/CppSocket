@@ -3,7 +3,7 @@
 #include "../hpp/SocketClient.hpp"
 
 
-// g++ -o client client_launcher.cpp -std=c++17
+// g++ -o client client_launcher.cpp SocketClient.cpp -std=c++17
 // ./client
 
 int main(int argc, char* argv[])
@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 
     // handle user input
 	std::string text;
-	while (client.running())
+	while (client.connected())
     {
 		std::getline(std::cin, text);
 		client.send_text(text);
