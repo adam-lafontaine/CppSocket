@@ -1,10 +1,54 @@
 #include "../hpp/SocketServer.hpp"
 
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+
+#include <WinSock2.h>
+#pragma comment (lib,"ws2_32.lib")
+
 #include <sstream>
 #include <cassert>
 
+
+static std::string to_csv(std::vector<std::string> const& list)
+{
+	const auto delim = ", ";
+
+	std::string msg = "";
+	for (auto const& err : list)
+	{
+		msg += err;
+		msg += delim;
+	}
+
+	msg.pop_back();
+	msg.pop_back();
+
+	return msg;
+}
+
 namespace MySocketLib
 {
+	struct ServerSocketInfo
+	{
+		SOCKET srv_socket = NULL;
+		SOCKET cli_socket = NULL;
+		struct sockaddr_in srv_addr = { 0 };
+	};
+
+
+	static void create_server_socket(ServerSocketInfo* info, const char* ip, unsigned short port)
+	{
+		// Create the TCP socket
+		info->srv_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+		// Create the server address
+		info->srv_addr = { 0 };
+		info->srv_addr.sin_family = AF_INET;
+		info->srv_addr.sin_addr.s_addr = inet_addr(ip);
+		info->srv_addr.sin_port = htons(port);
+	}
+
+
 	bool SocketServer::init()
 	{
 		// initialize WSA
@@ -17,6 +61,11 @@ namespace MySocketLib
 			return false;
 		}
 
+		m_socket_info = new socket_info_t;
+		create_server_socket(m_socket_info, m_public_ip.c_str(), m_port_no);
+
+		/*
+
 		// Create the TCP socket
 		m_srv_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		m_open = true;
@@ -25,7 +74,7 @@ namespace MySocketLib
 		m_srv_addr = { 0 };
 		m_srv_addr.sin_family = AF_INET;
 		m_srv_addr.sin_port = htons(m_port_no);
-		m_srv_addr.sin_addr.s_addr = inet_addr(m_public_ip.c_str());
+		m_srv_addr.sin_addr.s_addr = inet_addr(m_public_ip.c_str()); */
 
 		m_status = "Server Initialized";
 		return true;
@@ -34,8 +83,11 @@ namespace MySocketLib
 
 	bool SocketServer::bind_socket()
 	{
-		// bind the socket
-		if (bind(m_srv_socket, (SOCKADDR*)&m_srv_addr, sizeof(m_srv_addr)) == SOCKET_ERROR)
+		auto socket = m_socket_info->srv_socket;
+		auto addr = (SOCKADDR*)&m_socket_info->srv_addr;
+		auto size = sizeof(m_socket_info->srv_addr);
+
+		if (bind(socket, addr, size) == SOCKET_ERROR)
 		{
 			close_socket();
 			m_status = "Server bind() failed.";
@@ -51,7 +103,7 @@ namespace MySocketLib
 	{
 		m_running = false;
 		const auto port = std::to_string(m_port_no);
-		if (listen(m_srv_socket, 1) == SOCKET_ERROR)
+		if (listen(m_socket_info->srv_socket, 1) == SOCKET_ERROR)
 		{
 			close_socket();
 			m_status = "Server error listening on socket";
@@ -77,10 +129,10 @@ namespace MySocketLib
 		m_status = "Server waiting for client";
 
 		m_connected = false;
-		m_cli_socket = SOCKET_ERROR;
-		while (m_cli_socket == SOCKET_ERROR)
+		m_socket_info->cli_socket = SOCKET_ERROR;
+		while (m_socket_info->cli_socket == SOCKET_ERROR)
 		{
-			m_cli_socket = accept(m_srv_socket, NULL, NULL);
+			m_socket_info->cli_socket = accept(m_socket_info->srv_socket, NULL, NULL);
 		}
 
 		m_status = "Server connected to client";
@@ -113,12 +165,14 @@ namespace MySocketLib
 
 	void SocketServer::close_socket()
 	{
-		if (m_open)
-		{
-			closesocket(m_srv_socket);
-			WSACleanup();
-			m_open = false;
-		}
+		if (!m_open)
+			return;
+
+		closesocket(m_socket_info->srv_socket);
+		WSACleanup();
+		m_open = false;
+
+		delete m_socket_info;
 	}
 
 
@@ -126,7 +180,7 @@ namespace MySocketLib
 	{
 		if (m_connected)
 		{
-			closesocket(m_cli_socket);
+			closesocket(m_socket_info->cli_socket);
 			m_connected = false;
 		}
 	}
@@ -143,7 +197,7 @@ namespace MySocketLib
 
 		while (waiting)
 		{
-			int bytesRecv = recv(m_cli_socket, recvbuf, MAX_CHARS, 0);
+			int bytesRecv = recv(m_socket_info->cli_socket, recvbuf, MAX_CHARS, 0);
 			if (bytesRecv > 0) {
 				waiting = false;
 				oss << recvbuf;
@@ -163,26 +217,11 @@ namespace MySocketLib
 
 		std::vector<char> data(text.begin(), text.end());
 
-		int bytesSent = send(m_cli_socket, data.data(), static_cast<int>(data.size()), 0);
+		int bytesSent = send(m_socket_info->cli_socket, data.data(), static_cast<int>(data.size()), 0);
 	}
 
 
-	static std::string to_csv(std::vector<std::string> const& list)
-	{
-		const auto delim = ", ";
-
-		std::string msg = "";
-		for (auto const& err : list)
-		{
-			msg += err;
-			msg += delim;
-		}
-
-		msg.pop_back();
-		msg.pop_back();
-
-		return msg;
-	}
+	
 
 
 	std::string SocketServer::latest_error()

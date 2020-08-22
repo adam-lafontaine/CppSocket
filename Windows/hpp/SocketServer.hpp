@@ -1,26 +1,26 @@
 #pragma once
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#include <WinSock2.h>
-#pragma comment (lib,"ws2_32.lib")
 
 #include <string>
 #include <vector>
 
 namespace MySocketLib
 {	
+	struct ServerSocketInfo;
+
 	class SocketServer
 	{
 	private:
+
+		using socket_info_t = ServerSocketInfo;
+
+		socket_info_t* m_socket_info = NULL;
+
 		static int constexpr MAX_CHARS = 256;
 		unsigned short const DEFAULT_PORT = 27015;	
 
 		std::string m_public_ip = "NA";
-		unsigned short m_port_no = DEFAULT_PORT;
-
-		SOCKET m_srv_socket = NULL;
-		SOCKET m_cli_socket = NULL;
-		struct sockaddr_in m_srv_addr = { 0 }; // contains server address
+		unsigned short m_port_no = DEFAULT_PORT;		
 
 		bool m_running = false;
 		bool m_open = false;

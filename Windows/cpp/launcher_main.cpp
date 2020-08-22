@@ -1,5 +1,25 @@
-//#include "../hpp/launchers/client_server_threaded.hpp"
+//#define DO_CLIENT_SERVER
+//#define DO_CLIENT
+#define DO_SERVER
+
+#ifdef DO_CLIENT_SERVER
+#include "../hpp/launchers/client_server_threaded.hpp"
+#endif // DO_CLIENT_SERVER
+
+#ifdef DO_CLIENT
 #include "../hpp/launchers/client_launcher.hpp"
+#endif // DO_CLIENT
+
+#ifdef DO_SERVER
+#include "../hpp/launchers/server_launcher.hpp"
+#endif // DO_SERVER
+
+
+
+
+
+//#include "../hpp/launchers/client_server_threaded.hpp"
+
 //#include "../hpp/launchers/server_launcher.hpp"
 
 int main(int argc, char *argv[])
@@ -13,9 +33,12 @@ int main(int argc, char *argv[])
 #endif
 
 
-	//client_server_threaded();
+#ifdef DO_CLIENT_SERVER
+	client_server_threaded();
+#endif // DO_CLIENT_SERVER
 
-	//launch_client(argc, argv);
+#ifdef DO_CLIENT
+#ifdef _DEBUG
 
 	char app[] = "client";
 	char ip[] = "10.0.0.214";
@@ -23,5 +46,27 @@ int main(int argc, char *argv[])
 	char* new_args[] = { app, ip, port };
 	launch_client(3, new_args);
 
-	//launch_server(argc, argv);
+#else
+
+	launch_client(argc, argv);
+
+#endif // _DEBUG
+#endif // DO_CLIENT
+
+#ifdef DO_SERVER
+#ifdef _DEBUG
+
+	char app[] = "server";
+	char port[] = "27015";
+	char* new_args[] = { app, port };
+
+	launch_server(2, new_args);
+
+#else
+
+	launch_server(argc, argv);
+
+#endif // _DEBUG
+#endif // DO_SERVER
+
 }

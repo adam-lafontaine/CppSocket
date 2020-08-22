@@ -22,8 +22,6 @@ namespace MySocketLib
 		const char* m_srv_ip = DEFAULT_IP_ADDRESS;
 		unsigned short m_srv_port_no = DEFAULT_PORT;
 
-		
-
 		bool m_running = false;
 		bool m_open = false;
 		std::string m_status = "";
@@ -61,9 +59,6 @@ namespace MySocketLib
 		bool has_error() { return !m_errors.empty(); }
 		std::string latest_error();
 	};
-
-
-
 
 }
 
