@@ -1,8 +1,4 @@
 #pragma once
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-
-#include <WinSock2.h>
-#pragma comment (lib,"ws2_32.lib")
 
 #include <string>
 #include <vector>
@@ -10,10 +6,15 @@
 
 namespace MySocketLib
 {
-	// Class encapsulating WinSock client functionality
+	struct ClientSocketInfo;
+
 	class SocketClient 
 	{
 	private:
+		using socket_info_t = ClientSocketInfo;
+
+		socket_info_t* m_socket_info = nullptr;
+
 		static int constexpr MAX_CHARS = 256;
 		unsigned short const DEFAULT_PORT = 27015;		
 		const char* DEFAULT_IP_ADDRESS = "127.0.0.1";
@@ -21,11 +22,6 @@ namespace MySocketLib
 		const char* m_srv_ip = DEFAULT_IP_ADDRESS;
 		unsigned short m_srv_port_no = DEFAULT_PORT;
 
-		SOCKET m_socket = NULL;
-		sockaddr_in m_srv_addr = { 0 };
-
-		bool m_running = false;
-		bool m_open = false;
 		std::string m_status = "";
 
 		std::vector<std::string> m_errors;
@@ -33,6 +29,9 @@ namespace MySocketLib
 		bool init();
 		bool connect_socket();
 		void close_socket();
+
+		void create_socket_info();
+		void destroy_socket_info();
 
 	public:
 		SocketClient() {}
@@ -49,14 +48,20 @@ namespace MySocketLib
 			m_srv_port_no = srv_port;
 		}
 
-		~SocketClient() { close_socket(); }
+		~SocketClient()
+		{ 
+			close_socket();
+			destroy_socket_info();
+		}
 
 		void start();
 		void stop();
 		bool send_text(std::string const& text);
 		std::string receive_text();
 		std::string status() { return m_status; }
-		bool running() { return m_running; }
+
+		bool running();
+		bool connected();
 
 		bool has_error() { return !m_errors.empty(); }
 		std::string latest_error();

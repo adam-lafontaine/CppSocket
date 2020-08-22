@@ -1,10 +1,101 @@
 #include "../hpp/SocketServer.hpp"
 
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+
+#include <WinSock2.h>
+#pragma comment (lib,"ws2_32.lib")
+
 #include <sstream>
 #include <cassert>
 
+
+static std::string to_csv(std::vector<std::string> const& list)
+{
+	const auto delim = ", ";
+
+	std::string msg = "";
+	for (auto const& err : list)
+	{
+		msg += err;
+		msg += delim;
+	}
+
+	msg.pop_back();
+	msg.pop_back();
+
+	return msg;
+}
+
 namespace MySocketLib
 {
+	struct ServerSocketInfo
+	{
+		struct sockaddr_in srv_addr = { 0 };
+
+		SOCKET srv_socket = NULL;
+		SOCKET cli_socket = NULL;
+
+		bool srv_running = false;
+		bool cli_connected = false;		
+	};
+
+
+	static void create_server_socket(ServerSocketInfo* info, unsigned short port)
+	{
+		// Create the TCP socket
+		info->srv_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+		// Create the server address
+		info->srv_addr = { 0 };
+		info->srv_addr.sin_family = AF_INET;
+		info->srv_addr.sin_addr.s_addr = INADDR_ANY;
+		info->srv_addr.sin_port = htons(port);
+	}
+
+	void SocketServer::create_socket_info()
+	{
+		if(m_socket_info == nullptr)
+			m_socket_info = new socket_info_t;
+
+		create_server_socket(m_socket_info, m_port_no);
+	}
+
+
+	void SocketServer::destroy_socket_info()
+	{
+		if (m_socket_info == nullptr)
+			return;
+
+		if (m_socket_info->cli_connected)
+		{
+			closesocket(m_socket_info->cli_socket);
+			m_socket_info->cli_connected = false;
+		}
+
+		if (m_socket_info->srv_running)
+		{
+			closesocket(m_socket_info->srv_socket);
+			WSACleanup();
+			m_socket_info->srv_running = false;
+		}
+
+		delete m_socket_info;
+		m_socket_info = nullptr;
+	}
+
+
+	bool SocketServer::running()
+	{
+		return m_socket_info != nullptr && m_socket_info->srv_running;
+	}
+
+
+	bool SocketServer::connected()
+	{
+		return m_socket_info != nullptr && m_socket_info->cli_connected;
+	}
+
+
 	bool SocketServer::init()
 	{
 		// initialize WSA
@@ -17,15 +108,7 @@ namespace MySocketLib
 			return false;
 		}
 
-		// Create the TCP socket
-		m_srv_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		m_open = true;
-
-		// Create the server address
-		m_srv_addr = { 0 };
-		m_srv_addr.sin_family = AF_INET;
-		m_srv_addr.sin_port = htons(m_port_no);
-		m_srv_addr.sin_addr.s_addr = inet_addr(m_public_ip.c_str());
+		create_socket_info();
 
 		m_status = "Server Initialized";
 		return true;
@@ -34,8 +117,11 @@ namespace MySocketLib
 
 	bool SocketServer::bind_socket()
 	{
-		// bind the socket
-		if (bind(m_srv_socket, (SOCKADDR*)&m_srv_addr, sizeof(m_srv_addr)) == SOCKET_ERROR)
+		auto socket = m_socket_info->srv_socket;
+		auto addr = (SOCKADDR*)&m_socket_info->srv_addr;
+		auto size = sizeof(m_socket_info->srv_addr);
+
+		if (bind(socket, addr, size) == SOCKET_ERROR)
 		{
 			close_socket();
 			m_status = "Server bind() failed.";
@@ -49,12 +135,12 @@ namespace MySocketLib
 
 	bool SocketServer::listen_socket()
 	{
-		m_running = false;
+		m_socket_info->srv_running = false;
 		const auto port = std::to_string(m_port_no);
-		if (listen(m_srv_socket, 1) == SOCKET_ERROR)
+		if (listen(m_socket_info->srv_socket, 1) == SOCKET_ERROR)
 		{
 			close_socket();
-			m_status = "Server error listening on socket";
+			m_status = "Server error listening on port " + port;
 			m_errors.push_back(m_status);
 			return false;
 		}
@@ -67,7 +153,7 @@ namespace MySocketLib
 
 	bool SocketServer::connect_client()
 	{
-		if (!m_running)
+		if (!m_socket_info->srv_running)
 		{
 			m_status = "Server cannot connect, server not running";
 			m_errors.push_back(m_status);
@@ -76,28 +162,51 @@ namespace MySocketLib
 
 		m_status = "Server waiting for client";
 
-		m_connected = false;
-		m_cli_socket = SOCKET_ERROR;
-		while (m_cli_socket == SOCKET_ERROR)
+		m_socket_info->cli_connected = false;		
+
+		auto srv_socket = m_socket_info->srv_socket;
+		auto cli_addr = NULL; // (SOCKADDR*)&m_socket_info->cli_addr;
+		auto cli_len = NULL;  // &m_socket_info->cli_len;
+
+		m_socket_info->cli_socket = SOCKET_ERROR;
+
+		while (m_socket_info->cli_socket == SOCKET_ERROR)
 		{
-			m_cli_socket = accept(m_srv_socket, NULL, NULL);
+			m_socket_info->cli_socket = accept(srv_socket, /*cli_addr, cli_len*/ NULL, NULL);
 		}
 
 		m_status = "Server connected to client";
-		m_connected = true;
+		m_socket_info->cli_connected = true;
 
 		return true;
 	}
 
 
-	void SocketServer::start()
+	void SocketServer::disconnect_client()
 	{
-		bool result = init();
-
-		if (!init() || !bind_socket() || !listen_socket())
+		if (!connected())
 			return;
 
-		m_running = true;
+		closesocket(m_socket_info->cli_socket);
+
+		m_status = "Server disonnected from client";
+
+		m_socket_info->cli_connected = false;
+	}
+
+
+	void SocketServer::start()
+	{
+		if(running())
+			m_socket_info->srv_running = false;
+
+		if (!init() || !bind_socket() || !listen_socket())
+		{
+			close_socket();
+			return;
+		}			
+
+		m_socket_info->srv_running = true;
 	}
 
 
@@ -105,7 +214,6 @@ namespace MySocketLib
 	{
 		disconnect_client();
 
-		m_running = false;
 		close_socket();
 		m_status = "Server stopped";
 	}
@@ -113,75 +221,60 @@ namespace MySocketLib
 
 	void SocketServer::close_socket()
 	{
-		if (m_open)
-		{
-			closesocket(m_srv_socket);
-			WSACleanup();
-			m_open = false;
-		}
-	}
+		if (!running())
+			return;
 
-
-	void SocketServer::disconnect_client()
-	{
-		if (m_connected)
-		{
-			closesocket(m_cli_socket);
-			m_connected = false;
-		}
-	}
+		closesocket(m_socket_info->srv_socket);
+		WSACleanup();
+		m_socket_info->srv_running = false;
+	}	
 
 
 	std::string SocketServer::receive_text()
 	{
-		assert(m_running);
-		assert(m_connected);
+		assert(running());
+		assert(connected());
 
-		char recvbuf[MAX_CHARS] = "";
-		bool waiting = true;
-		std::ostringstream oss;
+		char buffer[MAX_CHARS] = "";
 
-		while (waiting)
+		int n_chars = recv(m_socket_info->cli_socket, buffer, MAX_CHARS, 0);
+		
+		if (n_chars < 0)
 		{
-			int bytesRecv = recv(m_cli_socket, recvbuf, MAX_CHARS, 0);
-			if (bytesRecv > 0) {
-				waiting = false;
-				oss << recvbuf;
-			}
+			m_status = "ERROR reading from client socket";
+			m_errors.push_back(m_status);
+			return "error";
 		}
+
+		std::ostringstream oss;
+		oss << buffer;
 
 		return oss.str();
 	}
 
 
-	void SocketServer::send_text(std::string const& text)
+	bool SocketServer::send_text(std::string const& text)
 	{
-		assert(m_running);
-		assert(m_connected);
-		if (!m_running || !m_connected)
-			return;
+		assert(running());
+		assert(connected());
 
-		std::vector<char> data(text.begin(), text.end());
+		if (!running() || !connected())
+			return false;
 
-		int bytesSent = send(m_cli_socket, data.data(), static_cast<int>(data.size()), 0);
-	}
+		auto cli_socket = m_socket_info->cli_socket;
+		auto data = text.data();
+		auto size = static_cast<int>(text.size());
 
+		int n_chars = send(cli_socket, data, size, 0);
 
-	static std::string to_csv(std::vector<std::string> const& list)
-	{
-		const auto delim = ", ";
-
-		std::string msg = "";
-		for (auto const& err : list)
+		if (n_chars < 0)
 		{
-			msg += err;
-			msg += delim;
+			m_status = "ERROR writing to client socket";
+			m_errors.push_back(m_status);
+			return false;
 		}
 
-		msg.pop_back();
-		msg.pop_back();
-
-		return msg;
+		return true;
 	}
 
 

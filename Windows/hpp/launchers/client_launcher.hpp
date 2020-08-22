@@ -24,7 +24,7 @@ void launch_client(int argc, char* argv[])
 
     // handle user input
     std::string text;
-    while (client.running())
+    while (client.connected())
     {
         std::getline(std::cin, text);
         client.send_text(text);
