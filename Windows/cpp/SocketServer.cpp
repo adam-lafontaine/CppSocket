@@ -26,6 +26,7 @@ static std::string to_csv(std::vector<std::string> const& list)
 	return msg;
 }
 
+
 namespace MySocketLib
 {
 	struct ServerSocketInfo

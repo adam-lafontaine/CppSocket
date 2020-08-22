@@ -1,9 +1,11 @@
+#if defined(_WIN32)
 #pragma once
+#endif
 
 #include <string>
 #include <vector>
 
-namespace MySocketLib
+namespace SocketLib
 {	
 	struct ServerSocketInfo;
 
@@ -19,7 +21,9 @@ namespace MySocketLib
 		unsigned short const DEFAULT_PORT = 27015;	
 
 		std::string m_public_ip = "NA";
-		unsigned short m_port_no = DEFAULT_PORT;	
+		unsigned short m_port_no = DEFAULT_PORT;
+
+        std::string m_net_interface = "NA";
 
 		std::string m_status = "";
 

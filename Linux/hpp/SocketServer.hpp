@@ -1,6 +1,7 @@
+
+
 #include <string>
 #include <vector>
-
 
 namespace SocketLib 
 {
@@ -17,10 +18,10 @@ namespace SocketLib
         static int constexpr MAX_CHARS = 256;
         unsigned short const DEFAULT_PORT = 27015;
 
-        std::string m_net_interface = "NA"; // ?
-
         std::string m_public_ip = "NA";
         unsigned short m_port_no = DEFAULT_PORT;
+
+        std::string m_net_interface = "NA";
         
         std::string m_status = "";
 
@@ -38,8 +39,7 @@ namespace SocketLib
         
     public:
         SocketServer()
-        { 
-            m_port_no = DEFAULT_PORT;
+        {
             get_network_info();
         }
 
@@ -53,6 +53,7 @@ namespace SocketLib
         {
             disconnect_client();
             close_socket();
+            destroy_socket_info();
         }
 
         void set_port(unsigned port) { m_port_no = port; }
@@ -72,8 +73,5 @@ namespace SocketLib
         bool has_error() { return !m_errors.empty(); }
         std::string latest_error();
     };
-
-    //====================================================    
-
     
 }
