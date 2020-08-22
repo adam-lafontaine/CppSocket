@@ -23,6 +23,7 @@ static std::string to_csv(std::vector<std::string> const& list)
 	return msg;
 }
 
+
 namespace SocketLib
 {
     struct ClientSocketInfo
@@ -52,6 +53,7 @@ namespace SocketLib
 		info->srv_addr.sin_addr.s_addr = inet_addr(srv_ip);
 		info->srv_addr.sin_port = htons(srv_port);		
 	}
+    
 
     void SocketClient::create_socket_info()
 	{

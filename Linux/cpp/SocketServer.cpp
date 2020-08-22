@@ -3,10 +3,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
-#include<ifaddrs.h>
+#include <ifaddrs.h>
 
-#include<sstream>
-#include<cassert>
+#include <sstream>
+#include <cassert>
 
 static std::string to_csv(std::vector<std::string> const& list)
 {
@@ -24,6 +24,7 @@ static std::string to_csv(std::vector<std::string> const& list)
 
     return msg;
 }
+
 
 namespace SocketLib
 {
@@ -88,6 +89,7 @@ namespace SocketLib
         return true;
     }
 
+
     bool SocketServer::bind_socket()
     {
         auto socket = m_socket_info->srv_socket;
@@ -105,6 +107,7 @@ namespace SocketLib
 
         return true;   
     }
+
 
     bool SocketServer::listen_socket()
     {
@@ -157,6 +160,7 @@ namespace SocketLib
 		return true;
     }
 
+
     void SocketServer::disconnect_client()
     {
 		if (!connected())
@@ -184,6 +188,7 @@ namespace SocketLib
 		m_socket_info->srv_running = true;
     }
 
+
     void SocketServer::stop()
     {
 		disconnect_client();
@@ -191,7 +196,6 @@ namespace SocketLib
 		close_socket();
 		m_status = "Server stopped";
 	}
-
 
 
     void SocketServer::close_socket()
@@ -249,9 +253,7 @@ namespace SocketLib
         }
 
         return true;
-	}
-
-    
+	}   
 
 
 	std::string SocketServer::latest_error()
@@ -262,6 +264,7 @@ namespace SocketLib
 
 		return msg;
 	}
+
 
     void SocketServer::get_network_info()
     {
