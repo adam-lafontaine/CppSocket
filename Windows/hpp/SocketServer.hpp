@@ -61,7 +61,7 @@ namespace MySocketLib
 		void disconnect_client();
 
 		std::string receive_text();
-		void send_text(std::string const& text);
+		bool send_text(std::string const& text);
 
 		std::string status() { return m_status; }
 		bool running();

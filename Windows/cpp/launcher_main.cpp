@@ -1,5 +1,5 @@
-#define DO_CLIENT_SERVER
-//#define DO_CLIENT
+//#define DO_CLIENT_SERVER
+#define DO_CLIENT
 //#define DO_SERVER
 
 #ifdef DO_CLIENT_SERVER
