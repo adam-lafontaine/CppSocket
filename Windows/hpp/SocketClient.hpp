@@ -1,25 +1,26 @@
 #pragma once
 
-
 #include <string>
 #include <vector>
 
 
 namespace MySocketLib
 {
-	typedef struct ClientSocketInfo client_socket_info_t;
+	struct ClientSocketInfo;
 
 	class SocketClient 
 	{
 	private:
+		using socket_info_t = ClientSocketInfo;
+
+		socket_info_t* m_socket_info = NULL;
+
 		static int constexpr MAX_CHARS = 256;
 		unsigned short const DEFAULT_PORT = 27015;		
 		const char* DEFAULT_IP_ADDRESS = "127.0.0.1";
 
 		const char* m_srv_ip = DEFAULT_IP_ADDRESS;
 		unsigned short m_srv_port_no = DEFAULT_PORT;
-
-		client_socket_info_t* m_socket_info;
 
 		
 

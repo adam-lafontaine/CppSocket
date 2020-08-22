@@ -9,6 +9,24 @@
 #include <cassert>
 
 
+static std::string to_csv(std::vector<std::string> const& list)
+{
+	const auto delim = ", ";
+
+	std::string msg = "";
+	for (auto const& err : list)
+	{
+		msg += err;
+		msg += delim;
+	}
+
+	msg.pop_back();
+	msg.pop_back();
+
+	return msg;
+}
+
+
 namespace MySocketLib
 {	
 	struct ClientSocketInfo
@@ -16,6 +34,19 @@ namespace MySocketLib
 		SOCKET socket = NULL;
 		sockaddr_in srv_addr = { 0 };
 	};
+
+
+	static void create_socket(ClientSocketInfo* info, const char* ip, unsigned short port)
+	{
+		// Create the TCP socket
+		info->socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+		// Create the server address
+		info->srv_addr = { 0 };
+		info->srv_addr.sin_family = AF_INET;
+		info->srv_addr.sin_addr.s_addr = inet_addr(ip);
+		info->srv_addr.sin_port = htons(port);		
+	}
 
 
 	bool SocketClient::init()
@@ -30,16 +61,8 @@ namespace MySocketLib
 			return false;
 		}
 
-		m_socket_info = new client_socket_info_t;
-
-		// Create the TCP socket
-		m_socket_info->socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-		// Create the server address
-		m_socket_info->srv_addr = { 0 };
-		m_socket_info->srv_addr.sin_family = AF_INET;
-		m_socket_info->srv_addr.sin_port = htons(m_srv_port_no);
-		m_socket_info->srv_addr.sin_addr.s_addr = inet_addr(m_srv_ip);
+		m_socket_info = new socket_info_t;
+		create_socket(m_socket_info, m_srv_ip, m_srv_port_no);
 
 		m_open = true;
 
@@ -70,7 +93,12 @@ namespace MySocketLib
 		}
 
 		// connect the socket
-		if (connect(m_socket_info->socket, (SOCKADDR*)&m_socket_info->srv_addr, sizeof(m_socket_info->srv_addr)) == SOCKET_ERROR) {
+		auto socket = m_socket_info->socket;
+		auto addr = (SOCKADDR*)&m_socket_info->srv_addr;
+		auto size = sizeof(m_socket_info->srv_addr);
+
+		if (connect(socket, addr, size) == SOCKET_ERROR)
+		{
 			m_status = "Client Connect() failed";
 			m_errors.push_back(m_status);
 			close_socket();
@@ -140,22 +168,7 @@ namespace MySocketLib
 	}
 
 
-	static std::string to_csv(std::vector<std::string> const& list)
-	{
-		const auto delim = ", ";
-
-		std::string msg = "";
-		for (auto const& err : list)
-		{
-			msg += err;
-			msg += delim;
-		}
-
-		msg.pop_back();
-		msg.pop_back();
-
-		return msg;
-	}
+	
 
 
 	std::string SocketClient::latest_error()
