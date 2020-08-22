@@ -30,9 +30,14 @@ namespace MySocketLib
 {
 	struct ServerSocketInfo
 	{
+		struct sockaddr_in srv_addr = { 0 };
+
 		SOCKET srv_socket = NULL;
 		SOCKET cli_socket = NULL;
-		struct sockaddr_in srv_addr = { 0 };
+
+		bool srv_connected = false;
+		bool cli_connected = false;
+		
 	};
 
 
@@ -48,6 +53,35 @@ namespace MySocketLib
 		info->srv_addr.sin_port = htons(port);
 	}
 
+	void SocketServer::create_socket_info()
+	{
+		m_socket_info = new socket_info_t;
+		create_server_socket(m_socket_info, m_public_ip.c_str(), m_port_no);
+	}
+
+
+	void SocketServer::destroy_socket_info()
+	{
+		if (m_socket_info == NULL)
+			return;
+
+		if (m_socket_info->cli_connected)
+		{
+			closesocket(m_socket_info->cli_socket);
+			m_connected = false;
+		}
+
+		if (m_socket_info->srv_connected)
+		{
+			closesocket(m_socket_info->srv_socket);
+			WSACleanup();
+			m_open = false;
+		}
+
+		delete m_socket_info;
+		m_socket_info = NULL;
+	}
+
 
 	bool SocketServer::init()
 	{
@@ -61,20 +95,7 @@ namespace MySocketLib
 			return false;
 		}
 
-		m_socket_info = new socket_info_t;
-		create_server_socket(m_socket_info, m_public_ip.c_str(), m_port_no);
-
-		/*
-
-		// Create the TCP socket
-		m_srv_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		m_open = true;
-
-		// Create the server address
-		m_srv_addr = { 0 };
-		m_srv_addr.sin_family = AF_INET;
-		m_srv_addr.sin_port = htons(m_port_no);
-		m_srv_addr.sin_addr.s_addr = inet_addr(m_public_ip.c_str()); */
+		create_socket_info();
 
 		m_status = "Server Initialized";
 		return true;
@@ -144,7 +165,7 @@ namespace MySocketLib
 
 	void SocketServer::start()
 	{
-		bool result = init();
+		m_running = false;
 
 		if (!init() || !bind_socket() || !listen_socket())
 			return;

@@ -36,6 +36,9 @@ namespace MySocketLib
 		bool listen_socket();
 		void close_socket();
 
+		void create_socket_info();
+		void destroy_socket_info();
+
 	public:
 		SocketServer() 
 		{
@@ -51,6 +54,7 @@ namespace MySocketLib
 		{
 			disconnect_client();
 			close_socket();
+			destroy_socket_info();
 		}
 
 		void set_port(unsigned port) { m_port_no = port; }

@@ -16,12 +16,6 @@
 
 
 
-
-
-//#include "../hpp/launchers/client_server_threaded.hpp"
-
-//#include "../hpp/launchers/server_launcher.hpp"
-
 int main(int argc, char *argv[])
 {
 #if defined(_WIN32) && defined(_DEBUG)
