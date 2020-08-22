@@ -1,5 +1,10 @@
 #include "../hpp/SocketClient.hpp"
 
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+
+#include <WinSock2.h>
+#pragma comment (lib,"ws2_32.lib")
+
 #include <sstream>
 #include <cassert>
 
@@ -8,7 +13,8 @@ namespace MySocketLib
 {	
 	struct ClientSocketInfo
 	{
-
+		SOCKET socket = NULL;
+		sockaddr_in srv_addr = { 0 };
 	};
 
 
@@ -27,13 +33,13 @@ namespace MySocketLib
 		m_socket_info = new client_socket_info_t;
 
 		// Create the TCP socket
-		m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);		
+		m_socket_info->socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 		// Create the server address
-		m_srv_addr = { 0 };
-		m_srv_addr.sin_family = AF_INET;
-		m_srv_addr.sin_port = htons(m_srv_port_no);
-		m_srv_addr.sin_addr.s_addr = inet_addr(m_srv_ip);
+		m_socket_info->srv_addr = { 0 };
+		m_socket_info->srv_addr.sin_family = AF_INET;
+		m_socket_info->srv_addr.sin_port = htons(m_srv_port_no);
+		m_socket_info->srv_addr.sin_addr.s_addr = inet_addr(m_srv_ip);
 
 		m_open = true;
 
@@ -47,23 +53,24 @@ namespace MySocketLib
 		if (!m_open)
 			return;
 
-		delete m_socket_info;
-
-		closesocket(m_socket);
+		closesocket(m_socket_info->socket);
 		WSACleanup();
 		m_open = false;
+
+		delete m_socket_info;
 	}
 
 
 	bool SocketClient::connect_socket()
 	{
-		if (!m_open) {
+		if (!m_open)
+		{
 			m_status = "Client not initialized.";
 			return false;
 		}
 
 		// connect the socket
-		if (connect(m_socket, (SOCKADDR*)&m_srv_addr, sizeof(m_srv_addr)) == SOCKET_ERROR) {
+		if (connect(m_socket_info->socket, (SOCKADDR*)&m_socket_info->srv_addr, sizeof(m_socket_info->srv_addr)) == SOCKET_ERROR) {
 			m_status = "Client Connect() failed";
 			m_errors.push_back(m_status);
 			close_socket();
@@ -76,13 +83,8 @@ namespace MySocketLib
 
 	void SocketClient::start()
 	{
-		if (!init()) {			
+		if (!init() || !connect_socket())
 			return;
-		}
-
-		if (!connect_socket()) {
-			return;
-		}
 
 		m_running = true;
 		m_status = "Client started";
@@ -103,7 +105,7 @@ namespace MySocketLib
 		if (!m_running)
 			return false;
 
-		auto n_chars = send(m_socket, text.data(), static_cast<int>(text.size()), 0);
+		auto n_chars = send(m_socket_info->socket, text.data(), static_cast<int>(text.size()), 0);
 
 		if (n_chars < 0)
 		{
@@ -125,8 +127,9 @@ namespace MySocketLib
 		bool waiting = true;
 		std::ostringstream oss;
 
-		while (waiting) {
-			auto n_chars = recv(m_socket, recvbuf, MAX_CHARS, 0);
+		while (waiting)
+		{
+			auto n_chars = recv(m_socket_info->socket, recvbuf, MAX_CHARS, 0);
 			if (n_chars > 0) {
 				waiting = false;
 				oss << recvbuf;

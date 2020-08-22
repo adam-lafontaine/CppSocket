@@ -1,8 +1,5 @@
 #pragma once
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#include <WinSock2.h>
-#pragma comment (lib,"ws2_32.lib")
 
 #include <string>
 #include <vector>
@@ -24,8 +21,7 @@ namespace MySocketLib
 
 		client_socket_info_t* m_socket_info;
 
-		SOCKET m_socket = NULL;
-		sockaddr_in m_srv_addr = { 0 };
+		
 
 		bool m_running = false;
 		bool m_open = false;
