@@ -6,16 +6,25 @@
 
 namespace MySocketLib
 {	
+	struct ClientSocketInfo
+	{
+
+	};
+
+
 	bool SocketClient::init()
 	{
 		// initialize WSA
 		WSAData wsaData;
 		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-		if (iResult != 0) {
+		if (iResult != 0)
+		{
 			m_status = "Client WSAStartup failed: " + iResult;
 			m_errors.push_back(m_status);
 			return false;
 		}
+
+		m_socket_info = new client_socket_info_t;
 
 		// Create the TCP socket
 		m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);		
@@ -37,6 +46,8 @@ namespace MySocketLib
 	{
 		if (!m_open)
 			return;
+
+		delete m_socket_info;
 
 		closesocket(m_socket);
 		WSACleanup();
