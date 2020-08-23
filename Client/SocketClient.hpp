@@ -1,10 +1,13 @@
+#if defined(_WIN32)
+#pragma once
+#endif
 
 #include <string>
 #include <vector>
 
 namespace SocketLib
 {
-	struct ClientSocketInfo;
+    struct ClientSocketInfo;
 
     class SocketClient
 	{
@@ -13,8 +16,9 @@ namespace SocketLib
 
 		socket_info_t* m_socket_info = nullptr;
 
-		unsigned short const DEFAULT_PORT = 27015;
         static int constexpr MAX_CHARS = 256;
+
+		unsigned short const DEFAULT_PORT = 27015;        
 		const char* DEFAULT_IP_ADDRESS = "127.0.0.1";
 
 		const char* m_srv_ip = DEFAULT_IP_ADDRESS;
@@ -66,5 +70,4 @@ namespace SocketLib
 		bool has_error() { return !m_errors.empty(); }
         std::string latest_error();
     };
-
 }

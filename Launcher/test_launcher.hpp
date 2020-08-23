@@ -1,5 +1,5 @@
-#include "../hpp/SocketServer.hpp"
-#include "../hpp/SocketClient.hpp"
+#include "../Server/SocketServer.hpp"
+#include "../Client/SocketClient.hpp"
 
 #include <iostream>
 #include <thread>
@@ -9,27 +9,9 @@
 #include <string>
 
 
-// g++ -o tester test_launcher.cpp SocketServer.cpp SocketClient.cpp -std=c++17 -lpthread
-// ./tester
-
-void run_server();
-void run_client();
-
 bool server_started = false;
 bool client_started = false;
 
-int main(int argc, char* argv[])
-{
-    std::thread ts(run_server);
-    std::thread tc(run_client);
-
-    while(!server_started || !client_started) { /* wait for both processes to start */ }    
-
-    ts.join();
-    tc.join();
-}
-
-//==============================
 
 std::mutex console_mtx;
 void print_line(std::string const& msg)
@@ -118,4 +100,16 @@ void run_client()
 
     client.send_text("goodbye");
     client.stop();
+}
+
+
+void launch_test()
+{
+    std::thread ts(run_server);
+    std::thread tc(run_client);
+
+    while(!server_started || !client_started) { /* wait for both processes to start */ }    
+
+    ts.join();
+    tc.join();
 }

@@ -1,26 +1,16 @@
+#include "../Client/SocketClient.hpp"
+
 #include <iostream>
 
-#include "../hpp/SocketClient.hpp"
-
-
-// g++ -o client client_launcher.cpp SocketClient.cpp -std=c++17
-// ./client
-
-int main(int argc, char* argv[])
+void launch_client(const char* srv_ip, unsigned short srv_port)
 {
-    if(argc < 3)
-    {
-        std::cout << "Usage: " << argv[0] << " " << "IP port" << '\n';
-        return 0;
-    }
-
-    SocketLib::SocketClient client(argv[1], atoi(argv[2]));
+    SocketLib::SocketClient client(srv_ip, srv_port);
     client.start();
 
     if(client.has_error())
     {
         std::cout << client.latest_error() << '\n';
-        return 0;
+        return;
     }
 
     std::cout << client.status() << '\n';

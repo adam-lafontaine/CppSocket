@@ -1,28 +1,20 @@
-#include "../hpp/SocketServer.hpp"
+#include "../Server/SocketServer.hpp"
 
 #include <iostream>
 
-
-// g++ -o server server_launcher.cpp SocketServer.cpp -std=c++17
-// ./server
-
-int main(int argc, char* argv[])
+void launch_server()
 {
-    SocketLib::SocketServer server;
+    auto port = 22222;
 
-    if(argc > 1)
-    {
-        auto port_no = atoi(argv[1]);
-        server.set_port(port_no);
-    }
-    
+    SocketLib::SocketServer server(port);
+
     std::cout << "server created" << '\n';
 
     server.start();
     if(server.has_error())
     {
         std::cout << server.latest_error() << '\n';
-        return 0;
+        return;
     }
 
     std::cout << server.status() << '\n';
@@ -32,7 +24,7 @@ int main(int argc, char* argv[])
     if(server.has_error())
     {
         std::cout << server.latest_error() << '\n';
-        return 0;
+        return;
     }
 
     std::cout << server.status() << '\n';
@@ -51,6 +43,4 @@ int main(int argc, char* argv[])
     }
 
     std::cout << server.status() << '\n';
-
-    
 }
