@@ -1,5 +1,6 @@
 //#define DO_SERVER
-#define DO_CLIENT
+//#define DO_CLIENT
+#define DO_TEST
 
 #ifdef DO_SERVER
 #include "server_launcher.hpp"
@@ -9,7 +10,11 @@
 #include "client_launcher.hpp"
 #endif
 
-// g++ -o launcher launcher_main.cpp ../Server/SocketServer.cpp ../Client/SocketClient.cpp -std=c++17
+#ifdef DO_TEST
+#include "test_launcher.hpp"
+#endif
+
+// g++ -o launcher launcher_main.cpp ../Server/SocketServer.cpp ../Client/SocketClient.cpp -std=c++17 -lpthread
 
 int main(int argc, char* argv[])
 {
@@ -30,6 +35,7 @@ _CrtSetDbgFlag(dbgFlags);
 
 #ifdef DO_CLIENT
 
+
 #ifdef _DEBUG
 
     launch_client("some_ip", 27015);
@@ -47,8 +53,13 @@ _CrtSetDbgFlag(dbgFlags);
 
 #endif // _DEBUG
 
+
 #endif // DO_CLIENT
 
+#ifdef DO_TEST
 
+    launch_test();
+
+#endif // DO_TEST
 
 }
