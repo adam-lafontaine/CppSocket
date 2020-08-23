@@ -26,9 +26,15 @@ _CrtSetDbgFlag(dbgFlags);
 
     launch_server();
 
-#endif
+#endif // DO_SERVER
 
 #ifdef DO_CLIENT
+
+#ifdef _DEBUG
+
+    launch_client("some_ip", 27015);
+
+#else
 
     if(argc != 3)
     {
@@ -38,7 +44,10 @@ _CrtSetDbgFlag(dbgFlags);
 
     launch_client(argv[1], atoi(argv[2]));
 
-#endif
+
+#endif // _DEBUG
+
+#endif // DO_CLIENT
 
 
 
