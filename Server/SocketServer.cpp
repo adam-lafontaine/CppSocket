@@ -38,11 +38,6 @@ static std::string to_csv(std::vector<std::string> const& list)
 
 namespace SocketLib
 {
-
-
-
-
-
     
 #if defined(_WIN32)
 
