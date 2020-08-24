@@ -17,7 +17,7 @@ namespace SocketLib
 
 		socket_info_t* m_socket_info = nullptr;
 
-		static int constexpr MAX_CHARS = 256;
+		static size_t constexpr MAX_CHARS = 256;
 		unsigned short const DEFAULT_PORT = 27015;	
 
 		std::string m_public_ip = "NA";
