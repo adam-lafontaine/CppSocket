@@ -58,13 +58,13 @@ namespace SocketLib
 	};
 
 
-	void os_close_socket(socket_t socket)
+	static void os_socket_close(socket_t socket)
 	{
 		closesocket(socket);
 	}
 
 
-	bool os_listen_socket(socket_t socket)
+	static bool os_listen_socket(socket_t socket)
 	{
 		int backlog = 1;
 
@@ -72,7 +72,7 @@ namespace SocketLib
 	}
 
 	
-	bool os_bind_socket(ServerSocketInfo* socket_info)
+	static bool os_bind_socket(ServerSocketInfo* socket_info)
 	{
 		auto socket = socket_info->srv_socket;
         auto addr = (addr_t*)&socket_info->srv_addr;
@@ -82,38 +82,20 @@ namespace SocketLib
 	}
 
 
-	int os_socket_read(socket_t socket, char* buffer, size_t buffer_size)
+	static int os_socket_read(socket_t socket, char* buffer, size_t buffer_size)
 	{
 		return recv(socket, buffer, buffer_size, 0);
 	}
 
 
-	int os_socket_write(socket_t socket, const char* buffer, size_t buffer_size)
+	static int os_socket_write(socket_t socket, const char* buffer, size_t buffer_size)
 	{
 		return send(socket, buffer, buffer_size, 0);
 	}
 
-
-    void SocketServer::destroy_socket_info()
+	static void os_socket_cleanup()
 	{
-		if (m_socket_info == nullptr)
-			return;
-
-		if (m_socket_info->cli_connected)
-		{
-			os_close_socket(m_socket_info->cli_socket);
-			m_socket_info->cli_connected = false;
-		}
-
-		if (m_socket_info->srv_running)
-		{
-			os_close_socket(m_socket_info->srv_socket);
-			WSACleanup();
-			m_socket_info->srv_running = false;
-		}
-
-		delete m_socket_info;
-		m_socket_info = nullptr;
+		WSACleanup();
 	}
 
 
@@ -138,7 +120,7 @@ namespace SocketLib
 
     bool SocketServer::connect_client()
 	{
-		if (!m_socket_info->srv_running)
+		if (!running())
 		{
 			m_status = "Server cannot connect, server not running";
 			m_errors.push_back(m_status);
@@ -166,17 +148,6 @@ namespace SocketLib
 		m_socket_info->cli_connected = true;
 
 		return true;
-	}
-
-
-    void SocketServer::close_socket()
-	{
-		if (!running())
-			return;
-
-		os_close_socket(m_socket_info->srv_socket);
-		WSACleanup();
-		m_socket_info->srv_running = false;
 	}
 
 
@@ -228,13 +199,13 @@ namespace SocketLib
     };
 
 
-	void os_close_socket(socket_t socket)
+	static void os_socket_close(socket_t socket)
 	{
 		close(socket);
 	}
 
 
-	bool os_listen_socket(socket_t socket)
+	static bool os_listen_socket(socket_t socket)
 	{
 		int backlog = 1;
 
@@ -242,7 +213,7 @@ namespace SocketLib
 	}
 
 	
-	bool os_bind_socket(ServerSocketInfo* socket_info)
+	static bool os_bind_socket(ServerSocketInfo* socket_info)
 	{
 		auto socket = socket_info->srv_socket;
         auto addr = (addr_t*)&socket_info->srv_addr;
@@ -252,38 +223,22 @@ namespace SocketLib
 	}
 
 
-	int os_socket_read(socket_t socket, char* buffer, size_t buffer_size)
+	static int os_socket_read(socket_t socket, char* buffer, size_t buffer_size)
 	{
 		return read(socket, buffer, buffer_size - 1);
 	}
 
 
-	int os_socket_write(socket_t socket, const char* buffer, size_t buffer_size)
+	static int os_socket_write(socket_t socket, const char* buffer, size_t buffer_size)
 	{
 		return write(socket, buffer, buffer_size);
 	}
 
 
-    void SocketServer::destroy_socket_info()
-    {
-        if (m_socket_info == nullptr)
-			return;
-
-        if (m_socket_info->cli_connected)
-		{
-			os_close_socket(m_socket_info->cli_socket);
-			m_socket_info->cli_connected = false;
-		}
-
-		if (m_socket_info->srv_running)
-		{
-			os_close_socket(m_socket_info->srv_socket);
-			m_socket_info->srv_running = false;
-		}
-
-		delete m_socket_info;
-		m_socket_info = nullptr;
-    }
+	static void os_socket_cleanup()
+	{
+		// do nothing
+	}
 
 
     bool SocketServer::init() 
@@ -297,7 +252,7 @@ namespace SocketLib
 
     bool SocketServer::connect_client()
     {
-        if (!m_socket_info->srv_running)
+        if (!running())
 		{
 			m_status = "Server cannot connect, server not running";
 			m_errors.push_back(m_status);
@@ -328,16 +283,6 @@ namespace SocketLib
 
 		return true;
     }
-
-
-    void SocketServer::close_socket()
-    {
-        if(!running())
-            return;
-
-        os_close_socket(m_socket_info->srv_socket);
-        m_socket_info->srv_running = false;
-    }	
 
 
     void SocketServer::get_network_info()
@@ -483,6 +428,7 @@ namespace SocketLib
     bool SocketServer::listen_socket()
 	{
 		m_socket_info->srv_running = false;
+
 		const auto port = std::to_string(m_port_no);
 		if (!os_listen_socket(m_socket_info->srv_socket))
 		{
@@ -503,7 +449,7 @@ namespace SocketLib
 		if (!connected())
 			return;
 
-		os_close_socket(m_socket_info->cli_socket);
+		os_socket_close(m_socket_info->cli_socket);
 
 		m_status = "Server disonnected from client";
 
@@ -572,6 +518,42 @@ namespace SocketLib
 		}
 
 		return true;
+	}
+
+
+	void SocketServer::close_socket()
+    {
+        if(!running())
+            return;
+
+        os_socket_close(m_socket_info->srv_socket);
+		os_socket_cleanup();
+
+        m_socket_info->srv_running = false;
+    }
+
+
+	void SocketServer::destroy_socket_info()
+	{
+		if (m_socket_info == nullptr)
+			return;
+
+		if (connected())
+		{
+			os_socket_close(m_socket_info->cli_socket);
+			m_socket_info->cli_connected = false;
+		}
+
+		if (running())
+		{
+			os_socket_close(m_socket_info->srv_socket);
+			os_socket_cleanup();
+
+			m_socket_info->srv_running = false;
+		}
+
+		delete m_socket_info;
+		m_socket_info = nullptr;
 	}
 
 
