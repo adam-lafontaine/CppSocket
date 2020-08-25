@@ -59,13 +59,13 @@ namespace SocketLib
 	}
 
 
-	static int os_socket_read(socket_t socket, char* buffer, size_t buffer_size)
+	static int os_socket_read(socket_t socket, char* buffer, int buffer_size)
 	{
 		return recv(socket, buffer, buffer_size, 0);
 	}
 
 
-	static int os_socket_write(socket_t socket, const char* buffer, size_t buffer_size)
+	static int os_socket_write(socket_t socket, const char* buffer, int buffer_size)
 	{
 		return send(socket, buffer, buffer_size, 0);
 	}
@@ -75,9 +75,9 @@ namespace SocketLib
 	{
 		auto socket = socket_info->socket;
         auto addr = (addr_t*)&socket_info->srv_addr;
-        auto size = sizeof(socket_info->srv_addr);
+        int size = sizeof(socket_info->srv_addr);
 
-		connect(socket, addr, size) != SOCKET_ERROR;
+		return connect(socket, addr, size) != SOCKET_ERROR;
 	}
 
 	static void os_socket_cleanup()
