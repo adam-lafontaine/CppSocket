@@ -62,7 +62,8 @@ void run_server()
 		const auto response = process_client_message(msg);
 		server.send_text(response);
 
-		if (end_session_msg(msg)) {
+		if (end_session_msg(msg))
+		{
 			print_line("Ending server session");
 			server.disconnect_client();
 			server.stop();
