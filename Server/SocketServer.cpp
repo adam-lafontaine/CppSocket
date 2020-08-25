@@ -76,7 +76,7 @@ namespace SocketLib
 	{
 		auto socket = socket_info->srv_socket;
         auto addr = (addr_t*)&socket_info->srv_addr;
-        auto size = sizeof(socket_info->srv_addr);
+        int size = sizeof(socket_info->srv_addr);
 
 		return bind(socket, addr, size) != SOCKET_ERROR;
 	}
