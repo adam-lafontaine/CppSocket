@@ -102,10 +102,7 @@ namespace SocketLib
 
 		m_status = "Client Initialized";
 		return true;
-	}
-
-
-    
+	}    
 
 #else
 
