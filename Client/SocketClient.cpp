@@ -41,27 +41,48 @@ namespace SocketLib
 
 #if defined(_WIN32)
 
+	using socket_t = SOCKET;
+	using addr_t = SOCKADDR;
+
     struct ClientSocketInfo
 	{
 		sockaddr_in srv_addr = { 0 };
-		SOCKET socket = NULL;
+		socket_t socket = NULL;
 
 		bool connected = false;
 	};
 
 
-    void SocketClient::destroy_socket_info()
+	static void os_close_socket(socket_t socket)
 	{
-		if (m_socket_info == nullptr)
-			return;
+		closesocket(socket);
+	}
 
-		if (connected())
-		{
-			closesocket(m_socket_info->socket);
-			WSACleanup();
-		}
 
-		delete m_socket_info;
+	static int os_socket_read(socket_t socket, char* buffer, int buffer_size)
+	{
+		return recv(socket, buffer, buffer_size, 0);
+	}
+
+
+	static int os_socket_write(socket_t socket, const char* buffer, int buffer_size)
+	{
+		return send(socket, buffer, buffer_size, 0);
+	}
+
+
+	static bool os_socket_connect(ClientSocketInfo* socket_info)
+	{
+		auto socket = socket_info->socket;
+        auto addr = (addr_t*)&socket_info->srv_addr;
+        int size = sizeof(socket_info->srv_addr);
+
+		return connect(socket, addr, size) != SOCKET_ERROR;
+	}
+
+	static void os_socket_cleanup()
+	{
+		WSACleanup();
 	}
 
 
@@ -81,116 +102,54 @@ namespace SocketLib
 
 		m_status = "Client Initialized";
 		return true;
-	}
-
-
-    bool SocketClient::connect_socket()
-	{
-		if (!running())
-		{
-			m_status = "Client not initialized.";
-			return false;
-		}
-
-		// connect the socket
-		auto socket = m_socket_info->socket;
-		auto addr = (SOCKADDR*)&m_socket_info->srv_addr;
-		auto size = sizeof(m_socket_info->srv_addr);
-
-		if (connect(socket, addr, size) == SOCKET_ERROR)
-		{
-			m_status = "Client Connect() failed";
-			m_errors.push_back(m_status);
-			close_socket();
-			return false;
-		}
-
-		m_socket_info->connected = true;
-
-		return true;
-	}
-
-
-    bool SocketClient::send_text(std::string const& text)
-	{
-		assert(connected());
-
-		if (!connected())
-			return false;
-
-		auto socket = m_socket_info->socket;
-		auto data = text.data();
-		auto size = static_cast<int>(text.size());
-
-		auto n_chars = send(socket, data, size, 0);
-
-		if (n_chars < 0)
-		{
-			m_status = "ERROR writing to socket";
-			m_errors.push_back(m_status);
-			return false;
-		}
-
-		return true;
-	}
-
-
-    std::string SocketClient::receive_text()
-	{
-		assert(connected());
-
-		char buffer[MAX_CHARS] = "";
-
-		bool waiting = true;
-		std::ostringstream oss;
-
-		while (waiting)
-		{
-			auto n_chars = recv(m_socket_info->socket, buffer, MAX_CHARS, 0);
-			if (n_chars > 0) {
-				waiting = false;
-				oss << buffer;
-			}
-		}
-
-		return oss.str();
-	}
-
-
-    void SocketClient::close_socket()
-	{
-		if (!connected())
-			return;
-
-		closesocket(m_socket_info->socket);
-		WSACleanup();
-
-		m_socket_info->connected = false;
-	}
+	}    
 
 #else
+
+	using socket_t = int;
+	using addr_t = struct sockaddr;
 
     struct ClientSocketInfo
     {
         struct sockaddr_in srv_addr = { 0 };
-        int socket;
+        socket_t socket;
 
         bool connected = false;     
     };
 
 
-    void SocketClient::destroy_socket_info()
-    {
-        if (m_socket_info == nullptr)
-			return;
+	static void os_close_socket(socket_t socket)
+	{
+		close(socket);
+	}
 
-        if (connected())
-		{
-			close(m_socket_info->socket);
-		}
 
-		delete m_socket_info;
-    }
+	static int os_socket_read(socket_t socket, char* buffer, size_t buffer_size)
+	{
+		return read(socket, buffer, buffer_size - 1);
+	}
+
+
+	static int os_socket_write(socket_t socket, const char* buffer, size_t buffer_size)
+	{
+		return write(socket, buffer, buffer_size);
+	}
+
+
+	bool os_socket_connect(ClientSocketInfo* socket_info)
+	{
+		auto socket = socket_info->socket;
+        auto addr = (addr_t*)&socket_info->srv_addr;
+        auto size = sizeof(socket_info->srv_addr);
+
+		return connect(socket, addr, size) >= 0;
+	}
+
+
+	static void os_socket_cleanup()
+	{
+		// do nothing
+	}
 
 
     bool SocketClient::init()
@@ -206,91 +165,6 @@ namespace SocketLib
 
 		m_status = "Client Initialized";
         return true;
-    }
-
-
-    bool SocketClient::connect_socket()
-	{		
-        if (!running())
-		{
-			m_status = "Client not initialized.";
-			return false;
-		}
-
-        // connect the socket
-        auto socket = m_socket_info->socket;
-        auto addr = (struct sockaddr *)&m_socket_info->srv_addr;
-        auto size = sizeof(m_socket_info->srv_addr);
-		
-		if (connect(socket, addr, size) < 0)
-		{
-			m_status = "ERROR Client connect failed";
-			m_errors.push_back(m_status);
-			close_socket();
-			return false;
-		}
-
-        m_socket_info->connected = true;
-
-		return true;
-    }
-
-
-    bool SocketClient::send_text(std::string const& text)
-	{
-		assert(connected());
-
-		if (!connected())
-			return false;
-
-        auto socket = m_socket_info->socket;
-		auto data = text.data();
-		auto size = static_cast<int>(text.size());
-
-        auto n_chars = write(socket, data, size);
-
-        if (n_chars < 0)
-		{
-            m_status = "ERROR writing to socket";
-			m_errors.push_back(m_status);
-            return false;
-        }
-
-        return true;
-    }
-
-
-    std::string SocketClient::receive_text()
-	{
-		assert(connected());
-
-		char buffer[MAX_CHARS] = "";
-
-        bool waiting = true;
-		std::ostringstream oss;     
-
-		while (waiting)
-		{
-			auto n_chars = read(m_socket_info->socket, buffer, MAX_CHARS - 1);
-			if (n_chars > 0)
-			{
-				waiting = false;
-				oss << buffer;
-			}
-		}
-
-		return oss.str();
-	}
-
-
-    void SocketClient::close_socket()
-	{
-        if (!connected())
-			return;
-
-		close(m_socket_info->socket);
-
-        m_socket_info->connected = false;
     }
 
 
@@ -366,5 +240,109 @@ namespace SocketLib
 
 		return msg;
 	}
+
+
+	std::string SocketClient::receive_text()
+	{
+		assert(connected());
+
+		char buffer[MAX_CHARS] = "";
+
+		bool waiting = true;
+		std::ostringstream oss;
+
+		while (waiting)
+		{
+			auto n_chars = os_socket_read(m_socket_info->socket, buffer, MAX_CHARS);
+			if (n_chars > 0)
+			{
+				waiting = false;
+				oss << buffer;
+			}
+		}
+
+		return oss.str();
+	}
+
+
+	bool SocketClient::send_text(std::string const& text)
+	{
+		assert(connected());
+
+		if (!connected())
+			return false;
+
+        auto socket = m_socket_info->socket;
+		auto data = text.data();
+		auto size = static_cast<int>(text.size());
+
+        auto n_chars = os_socket_write(socket, data, size);
+
+        if (n_chars < 0)
+		{
+            m_status = "ERROR writing to socket";
+			m_errors.push_back(m_status);
+            return false;
+        }
+
+        return true;
+    }
+
+
+	bool SocketClient::connect_socket()
+	{		
+        if (!running())
+		{
+			m_status = "Client not initialized.";
+			return false;
+		}
+
+        // connect the socket
+        auto socket = m_socket_info->socket;
+        auto addr = (addr_t*)&m_socket_info->srv_addr;
+        auto size = sizeof(m_socket_info->srv_addr);
+		
+		if (!os_socket_connect(m_socket_info))
+		{
+			m_status = "ERROR Client connect failed";
+			m_errors.push_back(m_status);
+			close_socket();
+			return false;
+		}
+
+        m_socket_info->connected = true;
+
+		return true;
+    }
+
+
+	void SocketClient::destroy_socket_info()
+	{
+		if (m_socket_info == nullptr)
+			return;
+
+		if (connected())
+		{
+			os_close_socket(m_socket_info->socket);
+			os_socket_cleanup();
+		}
+
+		delete m_socket_info;
+	}
+
+
+	void SocketClient::close_socket()
+	{
+		if (!connected())
+			return;
+
+		os_close_socket(m_socket_info->socket);
+		os_socket_cleanup();
+
+		m_socket_info->connected = false;
+	}
+
+
+
 
 }
