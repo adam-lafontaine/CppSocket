@@ -82,13 +82,13 @@ namespace SocketLib
 	}
 
 
-	static int os_socket_read(socket_t socket, char* buffer, size_t buffer_size)
+	static int os_socket_read(socket_t socket, char* buffer, int buffer_size)
 	{
 		return recv(socket, buffer, buffer_size, 0);
 	}
 
 
-	static int os_socket_write(socket_t socket, const char* buffer, size_t buffer_size)
+	static int os_socket_write(socket_t socket, const char* buffer, int buffer_size)
 	{
 		return send(socket, buffer, buffer_size, 0);
 	}
@@ -223,13 +223,13 @@ namespace SocketLib
 	}
 
 
-	static int os_socket_read(socket_t socket, char* buffer, size_t buffer_size)
+	static int os_socket_read(socket_t socket, char* buffer, int buffer_size)
 	{
 		return read(socket, buffer, buffer_size - 1);
 	}
 
 
-	static int os_socket_write(socket_t socket, const char* buffer, size_t buffer_size)
+	static int os_socket_write(socket_t socket, const char* buffer, int buffer_size)
 	{
 		return write(socket, buffer, buffer_size);
 	}
