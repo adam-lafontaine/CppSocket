@@ -7,19 +7,26 @@
 #include <cassert>
 #include <algorithm>
 #include <string>
-
+#include <unordered_map>
+#include <functional>
+#include <vector>
+#include <sstream>
+#include <iterator>
 
 bool server_started = false;
 bool client_started = false;
 
 
 std::mutex console_mtx;
-void print_line(std::string const& msg)
+void print_line(std::string const& msg = "")
 {
 	std::lock_guard<std::mutex> lk(console_mtx);
 
 	std::cout << msg << '\n';
 }
+
+
+//======= SEND MESSAGES ====================
 
 
 bool end_session_msg(std::string const& msg)
@@ -31,19 +38,18 @@ bool end_session_msg(std::string const& msg)
 }
 
 
-std::string process_client_message(std::string const& msg)
+void send_messages_server()
 {
-	auto rev = msg;
-	std::reverse(rev.begin(), rev.end());
+	const auto process_msg = [](std::string const& msg)
+	{
+		auto rev = msg;
+		std::reverse(rev.begin(), rev.end());
 
-	std::string response = "The message backwards is: '" + rev + "'";
+		std::string response = "The message backwards is: '" + rev + "'";
 
-	return response;
-}
+		return response;
+	};
 
-
-void run_server()
-{
     SocketLib::SocketServer server;
 
     server.start();
@@ -59,7 +65,7 @@ void run_server()
 	{
 		const auto msg = server.receive_text();
 		
-		const auto response = process_client_message(msg);
+		const auto response = process_msg(msg);
 		server.send_text(response);
 
 		if (end_session_msg(msg))
@@ -77,7 +83,7 @@ void run_server()
 }
 
 
-void run_client()
+void send_messages_client()
 {
     while(!server_started) { /* wait for server to start */ }
 
@@ -104,13 +110,66 @@ void run_client()
 }
 
 
+void test_send_messages()
+{
+	server_started = false;
+	client_started = false;
+
+	print_line("test_send_messages()");
+	std::thread ts(send_messages_server);
+	std::thread tc(send_messages_client);
+
+	while (!server_started || !client_started) { /* wait for both processes to start */ }
+
+	ts.join();
+	tc.join();
+
+	print_line();
+}
+
+
+//======= CALLBACK MAP ===================
+
+std::unordered_map <std::string, std::function<void(std::string const&)>> callbacks
+{
+	{ "print", [](std::string const& str) { print_line(str); } }
+};
+
+
+std::vector<std::string> to_args(std::string const& line)
+{
+	std::istringstream iss(line);
+	std::istream_iterator<std::string> beg(iss), end;
+
+	std::vector<std::string> args(beg, end);
+
+	return args;
+}
+
+
+void callback_map_server()
+{
+
+}
+
+
+void callback_map_client()
+{
+
+}
+
+
+void test_callback_map()
+{
+	server_started = false;
+	client_started = false;
+}
+
+
+//===========================================
+
+
 void launch_test()
 {
-    std::thread ts(run_server);
-    std::thread tc(run_client);
-
-    while(!server_started || !client_started) { /* wait for both processes to start */ }    
-
-    ts.join();
-    tc.join();
+	test_send_messages();
 }
