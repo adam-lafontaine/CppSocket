@@ -40,15 +40,11 @@ namespace SocketLib
 		void destroy_socket_info();
 
 	public:
-		SocketServer() 
-		{
-			get_network_info();
-		}
+		SocketServer() {}
 
 		SocketServer(unsigned short port)
 		{
 			m_port_no = port;
-			get_network_info();
 		}
 
 		~SocketServer()

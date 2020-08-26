@@ -97,23 +97,7 @@ namespace SocketLib
 	}
 
 
-    bool SocketServer::init()
-	{
-		// initialize WSA
-		WSAData wsaData;
-		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-		if (iResult != 0)
-		{
-			m_status = "Server WSAStartup failed : " + iResult;
-			m_errors.push_back(m_status);
-			return false;
-		}
-
-		create_socket_info();
-
-		m_status = "Server Initialized";
-		return true;
-	}
+    
 
 
     bool SocketServer::connect_client()
@@ -155,24 +139,23 @@ namespace SocketLib
 		WSADATA wsaData;
 		char Name[255];
 		PHOSTENT HostInfo;
-		wVersionRequested = MAKEWORD(1, 1);
+		wVersionRequested = MAKEWORD(2, 2);
 
-		if (WSAStartup(wVersionRequested, &wsaData) == 0)
+		if (WSAStartup(wVersionRequested, &wsaData) != 0
+			|| gethostname(Name, sizeof(Name)) != 0
+			|| (HostInfo = gethostbyname(Name)) == NULL)
 		{
-			if (gethostname(Name, sizeof(Name)) == 0)
-			{
-				//printf("Host name: %s\n", name);
-				if ((HostInfo = gethostbyname(Name)) != NULL)
-				{
-					int nCount = 0;
-					while (HostInfo->h_addr_list[nCount])
-					{
-						m_public_ip = std::string(inet_ntoa(*(struct in_addr*)HostInfo->h_addr_list[nCount]));
+			return;
+		}
 
-						++nCount;
-					}
-				}
-			}
+		//printf("Host name: %s\n", name);
+
+		int nCount = 0;
+		while (HostInfo->h_addr_list[nCount])
+		{
+			m_public_ip = std::string(inet_ntoa(*(struct in_addr*)HostInfo->h_addr_list[nCount]));
+
+			++nCount;
 		}
 	}
 
@@ -237,15 +220,6 @@ namespace SocketLib
 	{
 		// do nothing
 	}
-
-
-    bool SocketServer::init() 
-    {
-        create_socket_info();
-
-        m_status = "Server Initialized";
-        return true;
-    }
 
 
     bool SocketServer::connect_client()
@@ -386,6 +360,16 @@ namespace SocketLib
 	bool SocketServer::connected()
 	{
 		return m_socket_info != nullptr && m_socket_info->cli_connected;
+	}
+
+
+	bool SocketServer::init()
+	{
+		get_network_info();
+		create_socket_info();
+
+		m_status = "Server Initialized";
+		return true;
 	}
 
 
