@@ -298,9 +298,9 @@ namespace SocketLib
 		}
 
         // connect the socket
-        auto socket = m_socket_info->socket;
-        auto addr = (addr_t*)&m_socket_info->srv_addr;
-        auto size = sizeof(m_socket_info->srv_addr);
+        //auto socket = m_socket_info->socket;
+        //auto addr = (addr_t*)&m_socket_info->srv_addr;
+        //auto size = sizeof(m_socket_info->srv_addr);
 		
 		if (!os_socket_connect(m_socket_info))
 		{

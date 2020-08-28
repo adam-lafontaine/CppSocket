@@ -262,7 +262,9 @@ namespace SocketLib
         //https://www.binarytides.com/get-local-ip-c-linux/
 
         FILE *f;
-        char line[100] , *p , *c;
+        char line[100];
+		char* p = NULL;
+		char* c = NULL;
         
         f = fopen("/proc/net/route" , "r");
         

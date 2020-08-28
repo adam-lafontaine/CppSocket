@@ -12,9 +12,11 @@
 #include <vector>
 #include <sstream>
 #include <iterator>
+#include <atomic>
 
-bool server_started = false;
-bool client_started = false;
+std::atomic<bool> server_started;
+std::atomic<bool> client_started;
+
 
 
 std::mutex console_mtx;
@@ -85,10 +87,12 @@ void send_messages_server()
 
 void send_messages_client()
 {
+	print_line("Waiting for server");
     while(!server_started) { /* wait for server to start */ }
 
     SocketLib::SocketClient client;
 
+	print_line("Starting client");
     client.start();
 	print_line(client.status());
 
