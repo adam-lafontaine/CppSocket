@@ -38,7 +38,7 @@ _CrtSetDbgFlag(dbgFlags);
 
 #ifdef _DEBUG
 
-    launch_client("some_ip", 27015);
+    launch_client("127.0.0.1", 22222);
 
 #else
 

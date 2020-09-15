@@ -248,18 +248,16 @@ namespace SocketLib
 
 		char buffer[MAX_CHARS] = "";
 
-		bool waiting = true;
-		std::ostringstream oss;
-
-		while (waiting)
+		auto n_chars = os_socket_read(m_socket_info->socket, buffer, MAX_CHARS);
+		if (n_chars < 0)
 		{
-			auto n_chars = os_socket_read(m_socket_info->socket, buffer, MAX_CHARS);
-			if (n_chars > 0)
-			{
-				waiting = false;
-				oss << buffer;
-			}
+			m_status = "ERROR reading from socket";
+			m_errors.push_back(m_status);
+			return "error";
 		}
+
+		std::ostringstream oss;
+		oss << buffer;
 
 		return oss.str();
 	}
