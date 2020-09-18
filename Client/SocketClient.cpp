@@ -1,5 +1,19 @@
 #include "SocketClient.hpp"
 
+/*
+
+// LINUX
+struct timeval tv;
+tv.tv_sec = timeout_in_seconds;
+tv.tv_usec = 0;
+setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+
+// WINDOWS
+DWORD timeout = timeout_in_seconds * 1000;
+setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout);
+
+*/
+
 #if defined(_WIN32)
 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
