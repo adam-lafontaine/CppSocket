@@ -12,10 +12,9 @@
 #include <vector>
 #include <sstream>
 #include <iterator>
-#include <atomic>
 
-std::atomic<bool> server_started;
-std::atomic<bool> client_started;
+std::mutex server_mtx;
+std::mutex client_mtx;
 
 
 
@@ -42,6 +41,8 @@ bool end_session_msg(std::string const& msg)
 
 void send_messages_server()
 {
+	server_mtx.lock();
+
 	const auto process_msg = [](std::string const& msg)
 	{
 		auto rev = msg;
@@ -57,7 +58,7 @@ void send_messages_server()
     server.start();
 	print_line(server.status());
 
-    server_started = true;
+	server_mtx.unlock();
 
 	server.connect_client();
 	print_line(server.status());
@@ -87,8 +88,10 @@ void send_messages_server()
 
 void send_messages_client()
 {
+	client_mtx.lock();
+
 	print_line("Waiting for server");
-    while(!server_started) { /* wait for server to start */ }
+	server_mtx.lock(); server_mtx.unlock(); // wait for server to start
 
     SocketLib::SocketClient client;
 
@@ -96,7 +99,7 @@ void send_messages_client()
     client.start();
 	print_line(client.status());
 
-    client_started = true;  
+	client_mtx.unlock();
 
 	if (!client.running())
 		return;
@@ -116,14 +119,13 @@ void send_messages_client()
 
 void test_send_messages()
 {
-	server_started = false;
-	client_started = false;
-
 	print_line("test_send_messages()");
-	std::thread ts(send_messages_server);
-	std::thread tc(send_messages_client);
 
-	while (!server_started || !client_started) { /* wait for both processes to start */ }
+	std::thread ts(send_messages_server);
+	server_mtx.lock(); server_mtx.unlock();
+
+	std::thread tc(send_messages_client);
+	client_mtx.lock(); client_mtx.unlock();	
 
 	ts.join();
 	tc.join();
@@ -179,6 +181,8 @@ std::vector<std::string> to_args(std::string const& line)
 
 void callback_map_server()
 {
+	server_mtx.lock();
+
 	const auto process_msg = [](std::string const& msg)
 	{
 		const auto args = to_args(msg);
@@ -194,7 +198,7 @@ void callback_map_server()
 	server.start();
 	print_line(server.status());
 
-	server_started = true;
+	server_mtx.unlock();
 
 	server.connect_client();
 	print_line(server.status());
@@ -229,14 +233,16 @@ std::string is_expected(std::string const& a, std::string const& b)
 
 void callback_map_client()
 {
-	while (!server_started) { /* wait for server to start */ }
+	client_mtx.lock();
+
+	server_mtx.lock(); server_mtx.unlock(); // wait for server to start
 
 	SocketLib::SocketClient client;
 
 	client.start();
 	print_line(client.status());
 
-	client_started = true;
+	client_mtx.unlock();
 
 	if (!client.running())
 		return;
@@ -266,14 +272,13 @@ void callback_map_client()
 
 void test_callback_map()
 {
-	server_started = false;
-	client_started = false;
-
 	print_line("test_callback_map()");
-	std::thread ts(callback_map_server);
-	std::thread tc(callback_map_client);
 
-	while (!server_started || !client_started) { /* wait for both processes to start */ }
+	std::thread ts(callback_map_server);
+	server_mtx.lock(); server_mtx.unlock();
+
+	std::thread tc(callback_map_client);
+	client_mtx.lock(); client_mtx.unlock();
 
 	ts.join();
 	tc.join();
