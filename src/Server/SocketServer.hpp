@@ -1,6 +1,4 @@
-#if defined(_WIN32)
 #pragma once
-#endif
 
 #include <string>
 #include <vector>
