@@ -94,6 +94,7 @@ namespace SocketLib
 		return connect(socket, addr, size) != SOCKET_ERROR;
 	}
 
+
 	static void os_socket_cleanup()
 	{
 		WSACleanup();
