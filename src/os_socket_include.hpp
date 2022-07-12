@@ -89,3 +89,103 @@ static inline void os_socket_cleanup()
 
 #endif
 }
+
+
+static inline bool os_host_has_ip(const char* ip)
+{
+	bool found = false;
+
+#if defined(_WIN32)
+
+	char host_name[255];
+	PHOSTENT host_info;
+
+	if (gethostname(host_name, sizeof(host_name)) != 0 || (host_info = gethostbyname(host_name)) == NULL)
+	{
+		return false;
+	}
+
+	int count = 0;
+	while (host_info->h_addr_list[count])
+	{
+		auto item = inet_ntoa(*(struct in_addr*)host_info->h_addr_list[count]);
+		if (strcmp(ip, item) == 0)
+		{
+			found = true;
+			break;
+		}
+		++count;
+	}
+
+#else
+
+	//https://www.binarytides.com/get-local-ip-c-linux/
+
+	FILE* f;
+	char line[100];
+	char* p = NULL;
+	char* c = NULL;
+
+	f = fopen("/proc/net/route", "r");
+
+	while (fgets(line, 100, f))
+	{
+		p = strtok(line, " \t");
+		c = strtok(NULL, " \t");
+
+		if (p != NULL && c != NULL)
+		{
+			if (strcmp(c, "00000000") == 0)
+			{
+				m_net_interface = std::string(p);
+				break;
+			}
+		}
+	}
+
+	//which family do we require , AF_INET or AF_INET6
+	int fm = AF_INET; //AF_INET6
+	struct ifaddrs* ifaddr, * ifa;
+	int family, s;
+	char host[NI_MAXHOST];
+
+	if (getifaddrs(&ifaddr) == -1)
+	{
+		return false;
+	}
+
+	//Walk through linked list, maintaining head pointer so we can free list later
+	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+	{
+		if (ifa->ifa_addr == NULL)
+			continue;
+
+		family = ifa->ifa_addr->sa_family;
+		if (strcmp(ifa->ifa_name, p) != 0)
+			continue;
+
+		if (family != fm)
+			continue;
+
+		auto family_size = (family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
+
+		s = getnameinfo(ifa->ifa_addr, family_size, host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+
+		if (s != 0)
+		{
+			return false;
+		}
+
+		if (strcmp(ip, host) == 0)
+		{
+			found = true;
+			break;
+		}
+	}
+
+	freeifaddrs(ifaddr);
+
+#endif
+
+	return found;
+}

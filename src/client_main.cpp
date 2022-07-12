@@ -5,8 +5,8 @@
 
 int main()
 {
-	int port = 58002;
-	const char* ip_address = "192.168.137.1";
+	int server_port = 58002;
+	const char* server_ip_address = "192.168.137.1";
 
 	ClientSocketInfo client{};
 
@@ -16,7 +16,7 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	if (!os_client_open(client, ip_address, port))
+	if (!os_client_open(client, server_ip_address, server_port))
 	{
 		printf("client open failed.\n");
 		return EXIT_FAILURE;
@@ -42,7 +42,7 @@ int main()
 
 	os_socket_send_buffer(client.client_socket, message_buffer, strlen(message_buffer));
 
-	os_socket_receive_buffer(client.client_socket, message_buffer, 50);
+	auto c = getchar();
 
 	os_socket_close(client.client_socket);
 	os_socket_cleanup();
