@@ -12,9 +12,12 @@ using socklen_t = int;
 
 #else
 
+#include <stdio.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <ifaddrs.h>
+#include <string.h>
 
 using socket_t = int;
 using addr_t = struct sockaddr;
@@ -137,7 +140,6 @@ static inline bool os_host_has_ip(const char* ip)
 		{
 			if (strcmp(c, "00000000") == 0)
 			{
-				m_net_interface = std::string(p);
 				break;
 			}
 		}

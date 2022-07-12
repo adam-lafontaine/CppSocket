@@ -9,8 +9,8 @@ class ServerSocketInfo
 {
 public:
 
-	socket_t server_socket = NULL;
-	socket_t client_socket = NULL;
+	socket_t server_socket = 0;
+	socket_t client_socket = 0;
 
 	struct sockaddr_in server_addr = { 0 };
 	struct sockaddr_in client_addr = { 0 };

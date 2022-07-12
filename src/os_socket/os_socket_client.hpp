@@ -8,7 +8,7 @@ class ClientSocketInfo
 public:
 
 	sockaddr_in server_addr = { 0 };
-	socket_t client_socket = NULL;
+	socket_t client_socket = 0;
 
 	bool open = false;
 	bool connected = false;	

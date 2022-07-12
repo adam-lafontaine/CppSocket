@@ -1,4 +1,4 @@
-#include "os_socket_client.hpp"
+#include "os_socket/os_socket_client.hpp"
 
 #include <cstdio>
 
@@ -6,26 +6,28 @@
 int main()
 {
 	int server_port = 58002;
-	const char* server_ip_address = "192.168.137.1";
+	const char* server_ip_address = "10.0.0.143";
 
 	ClientSocketInfo client{};
+
+	printf("\nClient\n\n");
 
 	if (!os_socket_init())
 	{
 		printf("socket init failed.\n");
-		return EXIT_FAILURE;
+		return -1;
 	}
 
 	if (!os_client_open(client, server_ip_address, server_port))
 	{
 		printf("client open failed.\n");
-		return EXIT_FAILURE;
+		return -1;
 	}
 
 	if (!os_client_connect(client))
 	{
 		printf("client connect failed.\n");
-		return EXIT_FAILURE;
+		return -1;
 	}
 
 	printf("Client connected.\n");
@@ -38,7 +40,7 @@ int main()
 
 	memset(message_buffer, 0, 50);
 
-	sprintf_s(message_buffer, "Hello from client");
+	sprintf(message_buffer, "Hello from client");
 
 	os_socket_send_buffer(client.client_socket, message_buffer, strlen(message_buffer));
 
