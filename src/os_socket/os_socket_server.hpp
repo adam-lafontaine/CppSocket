@@ -96,6 +96,7 @@ static inline bool os_server_select_ip_address(ServerSocketInfo& server_info, co
 	{
 		memcpy(server_info.ip_address, ip, strlen(ip) + 1);
 		server_info.server_addr.sin_addr.s_addr = inet_addr(ip);
+		//int inet_pton(int af, const char *restrict src, void *restrict dst);
 	}
 
 	return ip_found;

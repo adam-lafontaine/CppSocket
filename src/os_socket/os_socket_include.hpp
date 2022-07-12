@@ -2,7 +2,7 @@
 
 #if defined(_WIN32)
 
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
+//#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <WinSock2.h>
 #pragma comment (lib,"ws2_32.lib")
 
@@ -112,6 +112,8 @@ static inline bool os_host_has_ip(const char* ip)
 	while (host_info->h_addr_list[count])
 	{
 		auto item = inet_ntoa(*(struct in_addr*)host_info->h_addr_list[count]);
+		//const char *inet_ntop(int af, const void *restrict src, char* restrict dst, socklen_t size);
+
 		if (strcmp(ip, item) == 0)
 		{
 			found = true;
