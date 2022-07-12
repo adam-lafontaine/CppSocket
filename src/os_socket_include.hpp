@@ -25,7 +25,7 @@ using addr_t = struct sockaddr;
 #endif
 
 
-inline bool os_socket_init()
+static inline bool os_socket_init()
 {	
 #if defined(_WIN32)
 
@@ -50,19 +50,19 @@ bool os_socket_open(socket_t& socket_handle)
 }
 
 
-inline bool os_socket_receive_buffer(socket_t socket, char* dst, int n_bytes)
+static inline bool os_socket_receive_buffer(socket_t socket, char* dst, int n_bytes)
 {
 	return recv(socket, dst, n_bytes, 0) != SOCKET_ERROR;
 }
 
 
-inline bool os_socket_send_buffer(socket_t socket, const char* src, int n_bytes)
+static inline bool os_socket_send_buffer(socket_t socket, const char* src, int n_bytes)
 {
 	return send(socket, src, n_bytes, 0) != SOCKET_ERROR;
 }
 
 
-inline void os_socket_close(socket_t socket)
+static inline void os_socket_close(socket_t socket)
 {
 #if defined(_WIN32)
 
@@ -76,7 +76,7 @@ inline void os_socket_close(socket_t socket)
 }
 
 
-inline void os_socket_cleanup()
+static inline void os_socket_cleanup()
 {
 #if defined(_WIN32)
 

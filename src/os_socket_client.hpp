@@ -37,15 +37,7 @@ static inline bool os_client_connect(ClientSocketInfo& client_info)
 	auto addr = (addr_t*)&client_info.server_addr;
 	int size = sizeof(client_info.server_addr);
 
-#if defined(_WIN32)
-
 	client_info.connected = connect(socket, addr, size) != SOCKET_ERROR;
-
-#else
-
-	client_info.connected = connect(socket, addr, size) >= 0;
-
-#endif
 
 	return client_info.connected;
 }

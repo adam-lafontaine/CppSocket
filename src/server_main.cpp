@@ -21,11 +21,11 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	if (!os_set_ip_address(server, ip_address))
+	/*if (!os_set_ip_address(server, ip_address))
 	{
 		printf("find public IP failed.\n");
 		return EXIT_FAILURE;
-	}
+	}*/
 
 	if (!os_server_bind(server))
 	{
@@ -39,7 +39,7 @@ int main()
 		return EXIT_FAILURE;
 	}
 	
-	printf("Waiting for client to connect on %s:%d\n", server.ip_address, server.port);
+	printf("Waiting for client to connect on port %d\n", server.port);
 	if (!os_server_accept(server))
 	{
 		printf("client connect failed.\n");
