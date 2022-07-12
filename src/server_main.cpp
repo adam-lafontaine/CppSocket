@@ -2,12 +2,16 @@
 
 #include "os_socket/os_socket_server.hpp"
 
+#if defined(_WIN32)
 
+#define sprintf sprintf_s
+
+#endif
 
 int main()
 {
-int port = 58002;
-	const char* ip_address = "10.0.0.143";
+	int port = 58002;
+	const char* ip_address = "127.0.0.1";
 
 	ServerSocketInfo server{};
 

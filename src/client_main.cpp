@@ -2,11 +2,17 @@
 
 #include <cstdio>
 
+#if defined(_WIN32)
+
+#define sprintf sprintf_s
+
+#endif
+
 
 int main()
 {
 	int server_port = 58002;
-	const char* server_ip_address = "10.0.0.143";
+	const char* server_ip_address = "127.0.0.1";
 
 	ClientSocketInfo client{};
 
