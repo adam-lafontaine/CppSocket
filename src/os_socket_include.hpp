@@ -19,6 +19,9 @@ using socklen_t = int;
 using socket_t = int;
 using addr_t = struct sockaddr;
 
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+
 #endif
 
 
@@ -43,43 +46,19 @@ bool os_socket_open(socket_t& socket_handle)
 {
 	socket_handle = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-#if defined(_WIN32)
-
 	return socket_handle != INVALID_SOCKET;
-
-#else
-
-	return socket_handle >= 0;
-
-#endif
 }
 
 
-inline int os_socket_receive_buffer(socket_t socket, char* dst, int n_bytes)
+inline bool os_socket_receive_buffer(socket_t socket, char* dst, int n_bytes)
 {
-#if defined(_WIN32)
-
-	return recv(socket, dst, n_bytes, 0);
-
-#else
-
-	return read(socket, dst, n_bytes - 1);
-
-#endif
+	return recv(socket, dst, n_bytes, 0) != SOCKET_ERROR;
 }
 
 
-inline int os_socket_send_buffer(socket_t socket, const char* src, int n_bytes)
+inline bool os_socket_send_buffer(socket_t socket, const char* src, int n_bytes)
 {
-#if defined(_WIN32)
-
-	return send(socket, src, n_bytes, 0);
-
-#else
-
-	return write(socket, src, n_bytes);
-
-#endif
+	return send(socket, src, n_bytes, 0) != SOCKET_ERROR;
 }
 
 
