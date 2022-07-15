@@ -2,7 +2,7 @@
 
 #if defined(_WIN32)
 
-//#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <WinSock2.h>
 #pragma comment (lib,"ws2_32.lib")
 
@@ -45,7 +45,7 @@ static inline bool os_socket_init()
 }
 
 
-bool os_socket_open(socket_t& socket_handle)
+bool os_socket_create(socket_t& socket_handle)
 {
 	socket_handle = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 

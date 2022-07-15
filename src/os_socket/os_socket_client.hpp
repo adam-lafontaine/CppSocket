@@ -17,7 +17,7 @@ public:
 
 static inline bool os_client_open(ClientSocketInfo& client_info, const char* server_ip, int server_port)
 {
-	client_info.open = os_socket_open(client_info.client_socket);
+	client_info.open = os_socket_create(client_info.client_socket);
 
 	if (client_info.open)
 	{
@@ -40,4 +40,12 @@ static inline bool os_client_connect(ClientSocketInfo& client_info)
 	client_info.connected = connect(socket, addr, size) != SOCKET_ERROR;
 
 	return client_info.connected;
+}
+
+
+static inline void os_client_close(ClientSocketInfo& client_info)
+{
+	os_socket_close(client_info.client_socket);
+	client_info.connected = false;
+	client_info.open = false;
 }

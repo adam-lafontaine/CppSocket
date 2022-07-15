@@ -21,19 +21,19 @@ int main()
 	if (!os_socket_init())
 	{
 		printf("socket init failed.\n");
-		return -1;
+		return 1;
 	}
 
 	if (!os_client_open(client, server_ip_address, server_port))
 	{
 		printf("client open failed.\n");
-		return -1;
+		return 1;
 	}
 
 	if (!os_client_connect(client))
 	{
 		printf("client connect failed.\n");
-		return -1;
+		return 1;
 	}
 
 	printf("Client connected.\n");
@@ -52,6 +52,6 @@ int main()
 
 	auto c = getchar();
 
-	os_socket_close(client.client_socket);
+	os_client_close(client);
 	os_socket_cleanup();
 }

@@ -20,32 +20,32 @@ int main()
 	if (!os_socket_init())
 	{
 		printf("socket init failed.\n");
-		return -1;
+		return 1;
 	}
 
 	if (!os_server_open(server, port))
 	{
 		printf("server open failed.\n");
-		return -1;
+		return 1;
 	}	
 
 	if (!os_server_bind(server))
 	{
 		printf("server bind failed.\n");
-		return -1;
+		return 1;
 	}
 
 	if (!os_server_listen(server))
 	{
 		printf("server listen failed.\n");
-		return -1;
+		return 1;
 	}
 
 	printf("Waiting for client to connect on port %d\n", server.port);
 	if (!os_server_accept(server))
 	{
 		printf("client connect failed.\n");
-		return -1;
+		return 1;
 	}
 
 	printf("Client connected\n");
@@ -62,7 +62,7 @@ int main()
 
 	auto c = getchar();
 
-	os_socket_close(server.client_socket);
-	os_socket_close(server.server_socket);
+	os_server_disconnect(server);
+	os_server_close(server);
 	os_socket_cleanup();
 }

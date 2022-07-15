@@ -31,7 +31,7 @@ public:
 
 static inline bool os_server_open(ServerSocketInfo& server_info, int port)
 {
-	server_info.open = os_socket_open(server_info.server_socket);
+	server_info.open = os_socket_create(server_info.server_socket);
 
 	if (server_info.open)
 	{
@@ -85,6 +85,22 @@ static inline bool os_server_accept(ServerSocketInfo& server_info)
 	server_info.client_connected = server_info.client_socket != INVALID_SOCKET;
 
 	return server_info.client_connected;
+}
+
+
+static inline void os_server_disconnect(ServerSocketInfo& server_info)
+{
+	os_socket_close(server_info.client_socket);
+	server_info.client_connected = false;
+}
+
+
+static inline void os_server_close(ServerSocketInfo& server_info)
+{	
+	os_socket_close(server_info.server_socket);
+	server_info.listen = false;
+	server_info.bind = false;
+	server_info.open = false;
 }
 
 
