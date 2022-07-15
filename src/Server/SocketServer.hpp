@@ -1,73 +1,17 @@
 #pragma once
 
-#include <string>
-#include <vector>
+class SocketServer
+{
+private:
+	class ServerSocketInfo;
+	using server_ptr_t = ServerSocketInfo*;
 
-namespace SocketLib
-{	
-	struct ServerSocketInfo;
+	server_ptr_t m_server = nullptr;
 
-	class SocketServer
-	{
-	private:
 
-		using socket_info_t = ServerSocketInfo;
+public:
 
-		socket_info_t* m_socket_info = nullptr;
+	SocketServer();
 
-		static int constexpr MAX_CHARS = 256;
-		unsigned short const DEFAULT_PORT = 27015;	
-
-		std::string m_public_ip = "NA";
-		unsigned short m_port_no = DEFAULT_PORT;
-
-        std::string m_net_interface = "NA";
-
-		std::string m_status = "";
-
-		std::vector<std::string> m_errors;
-
-		void get_network_info();
-
-		bool init();
-		bool bind_socket();
-		bool listen_socket();
-		void close_socket();
-
-		void create_socket_info();
-		void destroy_socket_info();
-
-	public:
-		SocketServer() {}
-
-		SocketServer(unsigned short port)
-		{
-			m_port_no = port;
-		}
-
-		~SocketServer()
-		{
-			disconnect_client();
-			close_socket();
-			destroy_socket_info();
-		}
-
-		void set_port(unsigned port) { m_port_no = port; }
-
-		void start();
-		void stop();
-		bool connect_client();
-		void disconnect_client();
-
-		std::string receive_text();
-		bool send_text(std::string const& text);
-
-		std::string status() { return m_status; }
-		bool running();
-		bool connected();
-
-		bool has_error() { return !m_errors.empty(); }
-		std::string latest_error();
-	};
-
-}
+	~SocketServer();
+};
