@@ -1,12 +1,12 @@
 #include "../Server/SocketServer.hpp"
 #include "../Client/SocketClient.hpp"
-#include "win32_leak_check.h"
 
 #include <iostream>
 #include <thread>
 #include <mutex>
 #include <chrono>
 #include <string>
+#include <cstring>
 
 #if defined(_WIN32)
 
@@ -190,7 +190,6 @@ void run_server()
 
 void run_client()
 {
-	bool disconnect = false;
 	bool stop = false;
 
 	SocketClient client;
@@ -229,8 +228,6 @@ void run_client()
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		}
-
-		disconnect = false;
 
 		print_line("Client connected");
 		while (client.is_connected())

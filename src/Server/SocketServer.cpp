@@ -105,7 +105,7 @@ void SocketServer::receive_text()
 	char buffer[BUFFER_SIZE] = { 0 };
 	auto length = (int)BUFFER_SIZE;
 
-	bool result = os_socket_receive_buffer(socket, buffer, length);
+	bool result = os_socket_receive_buffer(socket, buffer, length) && strlen(buffer);
 
 	on_receive(result, buffer);
 }

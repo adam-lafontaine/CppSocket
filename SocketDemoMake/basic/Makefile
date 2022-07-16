@@ -1,7 +1,7 @@
-GPP := g++-10 -std=c++17
+GPP := g++-10 -std=c++17 -Wall -O3
 
 build := ./build
-src  := ./src
+src  := ../../src
 os_socket := $(src)/os_socket
 
 server_exe := $(build)/server
