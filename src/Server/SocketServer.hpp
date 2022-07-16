@@ -1,5 +1,11 @@
 #pragma once
 
+#include <functional>
+
+
+using cstring = const char*;
+
+
 class ServerSocketInfo;
 
 class SocketServer
@@ -10,14 +16,20 @@ private:
 
 	server_ptr_t m_server = nullptr;
 
+	static constexpr size_t BUFFER_SIZE = 50;
 
-public:
+	char m_recv_buffer[BUFFER_SIZE];
+
+
+public:	
+
+	SocketServer();
 
 	~SocketServer();
 
 	bool open(int port);
 
-	bool start();	
+	bool start();
 
 	bool connect();
 
@@ -30,4 +42,12 @@ public:
 	bool is_running();
 
 	bool is_connected();
+
+	void send_text(cstring message);
+
+	void receive_text();
+
+	std::function<void(bool, cstring)> on_send;
+
+	std::function<void(bool, cstring)> on_receive;
 };

@@ -3,6 +3,13 @@
 
 
 
+SocketServer::SocketServer()
+{
+	on_send = [](bool, cstring) {};
+	on_receive = [](bool, cstring) {};
+}
+
+
 SocketServer::~SocketServer()
 {
 	if (is_connected())
@@ -34,7 +41,7 @@ bool SocketServer::open(int port)
 
 	auto& server = *m_server;
 
-	return !os_socket_init() && os_server_open(server, port) && os_server_bind(server);
+	return os_socket_init() && os_server_open(server, port) && os_server_bind(server);
 }
 
 
@@ -46,7 +53,7 @@ bool SocketServer::start()
 
 bool SocketServer::connect()
 {
-	os_server_accept(*m_server);
+	return os_server_accept(*m_server);
 }
 
 
@@ -77,4 +84,27 @@ bool SocketServer::is_running()
 bool SocketServer::is_connected()
 {
 	return m_server != nullptr && m_server->client_connected;
+}
+
+
+void SocketServer::send_text(cstring buffer)
+{
+	auto socket = m_server->client_socket;
+	auto length = (int)BUFFER_SIZE;
+
+	bool result = os_socket_send_buffer(socket, buffer, length);
+
+	on_send(result, buffer);
+}
+
+
+void SocketServer::receive_text()
+{
+	auto socket = m_server->client_socket;
+	auto buffer = m_recv_buffer;
+	auto length = (int)BUFFER_SIZE;
+
+	bool result = os_socket_receive_buffer(socket, buffer, length);
+
+	on_receive(result, buffer);
 }
