@@ -87,10 +87,11 @@ bool SocketServer::is_connected()
 }
 
 
-void SocketServer::send_text(cstring buffer)
+void SocketServer::send_text(std::string const& message)
 {
 	auto socket = m_server->client_socket;
-	auto length = (int)BUFFER_SIZE;
+	auto buffer = message.data();
+	auto length = (int)message.size();
 
 	bool result = os_socket_send_buffer(socket, buffer, length);
 
@@ -101,7 +102,7 @@ void SocketServer::send_text(cstring buffer)
 void SocketServer::receive_text()
 {
 	auto socket = m_server->client_socket;
-	auto buffer = m_recv_buffer;
+	char buffer[BUFFER_SIZE] = { 0 };
 	auto length = (int)BUFFER_SIZE;
 
 	bool result = os_socket_receive_buffer(socket, buffer, length);

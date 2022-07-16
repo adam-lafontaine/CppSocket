@@ -1,18 +1,17 @@
 #include "../Server/SocketServer.hpp"
 #include "../Client/SocketClient.hpp"
 
-#include <cstdio>
+#include <iostream>
 #include <thread>
 #include <mutex>
 #include <chrono>
 
-
 #if defined(_WIN32)
 
 #define sprintf sprintf_s
-#define scanf scanf_s
 
 #endif
+
 
 
 constexpr int PORT_NUMBER = 57884;
@@ -21,27 +20,58 @@ constexpr auto STOP_FLAG = "KILL";
 constexpr auto CLIENT_DISCONNECT_FLAG = "END";
 
 std::mutex console_mtx;
+std::mutex network_mtx;
 
-void print(cstring fmt, ...)
+void print_line(cstring msg)
 {
 	std::lock_guard<std::mutex> lk(console_mtx);
 
-	printf(fmt);
+	std::cout << msg << '\n';
 }
 
 
-void read_console(cstring buffer)
+void print_line(cstring msg, cstring concat)
 {
 	std::lock_guard<std::mutex> lk(console_mtx);
 
-	scanf("%s", buffer);
+	std::cout << msg << concat << '\n';
+
 }
+
+void read_console(std::string& buffer)
+{
+	std::lock_guard<std::mutex> lk(console_mtx);
+
+	std::getline(std::cin, buffer);
+}
+
+
+void server_send(SocketServer& server, std::string const& msg)
+{
+	std::lock_guard<std::mutex> lk(network_mtx);
+
+	server.send_text(msg);
+}
+
+
+void client_send(SocketClient& client, cstring msg)
+{
+	std::lock_guard<std::mutex> lk(network_mtx);
+
+	client.send_text(msg);
+}
+
 
 
 void process_server_send(bool send_result, cstring server_msg)
 {
-	auto send = send_result ? "SUCCESS" : "FAIL";
-	print("server send: %s | %s\n", send, server_msg);
+	if (!send_result)
+	{
+		print_line("server send: FAIL");
+		return;
+	}
+
+	print_line("server send: SUCCESS | ", server_msg);
 }
 
 
@@ -49,19 +79,19 @@ void process_server_receive(bool receive_result, cstring client_msg)
 {
 	if (!receive_result)
 	{
-		print("server recv: FAIL\n");
+		print_line("server recv: FAIL");
 		return;
 	}
 
-	print("server recv: SUCCESS | %s\n", client_msg);	
+	print_line("server recv: SUCCESS | ", client_msg);	
 }
 
 
 void echo_message(SocketServer& server, cstring msg)
 {
-	char buffer[50];
-	sprintf(buffer, "echo: %s\n", msg);
-	server.send_text(buffer);
+	auto echo = std::string("echo: ") + msg;
+	
+	server_send(server, echo);
 }
 
 
@@ -69,7 +99,7 @@ void check_stop_server(SocketServer& server, cstring msg)
 {
 	if (strcmp(msg, STOP_FLAG) == 0)
 	{
-		print("stopping server\n");
+		print_line("stopping server");
 		server.disconnect();
 		server.close();
 	}
@@ -78,8 +108,13 @@ void check_stop_server(SocketServer& server, cstring msg)
 
 void process_client_send(bool send_result, cstring client_msg)
 {
-	auto send = send_result ? "SUCCESS" : "FAIL";
-	print("client send: %s | %s\n", send, client_msg);
+	if (!send_result)
+	{
+		print_line("client send: FAIL");
+		return;
+	}
+
+	print_line("client send: SUCCESS | ", client_msg);
 }
 
 
@@ -87,20 +122,11 @@ void process_client_receive(bool receive_result, cstring server_msg)
 {
 	if (!receive_result)
 	{
-		print("client recv: FAIL\n");
+		print_line("client recv: FAIL\n");
 		return;
 	}
 
-	print("client recv: SUCCESS | %s\n", server_msg);
-}
-
-
-void check_disconnect_client(SocketClient& client, cstring msg)
-{
-	if (strcmp(msg, CLIENT_DISCONNECT_FLAG) == 0)
-	{
-		client.disconnect();
-	}
+	print_line("client recv: SUCCESS | ", server_msg);
 }
 
 
@@ -108,7 +134,7 @@ void check_stop_client(SocketClient& client, cstring msg)
 {
 	if (strcmp(msg, STOP_FLAG) == 0)
 	{
-		print("stopping client\n");
+		print_line("stopping client");
 
 	}
 }
@@ -119,27 +145,33 @@ void run_server()
 	SocketServer server;
 	server.on_send = process_server_send;
 	server.on_receive = [&](bool r, cstring m) 
-	{
+	{		
 		process_server_receive(r, m);
+		if (!r)
+		{
+			print_line("server disconnecting");
+			server.disconnect();
+			return;
+		}
 		echo_message(server, m);
 		check_stop_server(server, m);
 	};
 
 	if (!server.open(PORT_NUMBER))
 	{
-		print("Error server open\n");
+		print_line("Error server open");
 		return;
 	}
 
 	if (!server.start())
 	{
-		print("Error server start\n");
+		print_line("Error server start");
 		return;
 	}
 
 	while (server.is_running())
 	{
-		print("Server waiting for connection\n");
+		print_line("Server waiting for connection");
 		server.connect();
 
 		while (server.is_connected())
@@ -148,58 +180,91 @@ void run_server()
 		}
 	}
 
-	print("Server done\n");
+	print_line("Server done");
 }
 
 
 void run_client()
 {
-	bool try_connect = true;
+	bool disconnect = false;
+	bool stop = false;
 
 	SocketClient client;
-	client.on_send = process_client_send;
-	client.on_receive = [&](bool r, cstring m) 
+	client.on_receive = process_client_receive;
+	client.on_send = [&](bool r, cstring m) 
 	{
-		process_client_receive(r, m);
-		check_disconnect_client(client, m);
-		if (strcmp(m, STOP_FLAG) == 0)
+		process_client_send(r, m);
+
+		if (strcmp(m, CLIENT_DISCONNECT_FLAG) == 0)
 		{
-			try_connect = false;
+			disconnect = true;
+		}
+		else if (strcmp(m, STOP_FLAG) == 0)
+		{
+			stop = true;
 		}
 	};
 
 	if (!client.open(IP_ADDRESS, PORT_NUMBER))
 	{
-		print("Error client open\n");
+		print_line("Error client open");
 		return;
 	}
 
-	char buffer[50];
+	std::string message_buffer;
 
-	while (try_connect)
+	while (!stop)
 	{
-		print("Client waiting for server");
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+		print_line("Client waiting for server");
 		while (!client.connect())
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		}
 
-		print("Client connected");
+		disconnect = false;
+
+		print_line("Client connected");
 		while (client.is_connected())
 		{
-			memset(buffer, 0, 50);
-			read_console(buffer);
-			client.send_text(buffer);
-		}
-	}
+			read_console(message_buffer);
+			client_send(client, message_buffer.data());
 
-	print("Client done");
+			if (disconnect)
+			{
+				print_line("client disconnecting");
+				client.disconnect();
+			}
+			else if (stop)
+			{
+				print_line("stopping client");
+				client.disconnect();
+			}
+
+			if (client.is_connected())
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
+				client.receive_text();
+			}
+		}
+
+		if (!client.open(IP_ADDRESS, PORT_NUMBER))
+		{
+			print_line("Error client open");
+			stop = true;
+		}
+	}	
+
+	print_line("Client done\n");
 }
 
 
 int main()
 {
-	//run_server();
+	std::thread t_server(run_server);
+	std::thread t_client(run_client);
 
-	run_client();
+	t_server.join();
+	t_client.join();
 }

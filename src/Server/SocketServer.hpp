@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <string>
 
 
 using cstring = const char*;
@@ -17,8 +18,6 @@ private:
 	server_ptr_t m_server = nullptr;
 
 	static constexpr size_t BUFFER_SIZE = 50;
-
-	char m_recv_buffer[BUFFER_SIZE];
 
 
 public:	
@@ -43,7 +42,7 @@ public:
 
 	bool is_connected();
 
-	void send_text(cstring message);
+	void send_text(std::string const& message);
 
 	void receive_text();
 
