@@ -5,6 +5,7 @@
 #include <thread>
 #include <mutex>
 #include <chrono>
+#include <string>
 
 #if defined(_WIN32)
 
@@ -50,7 +51,7 @@ void server_send(SocketServer& server, std::string const& msg)
 {
 	std::lock_guard<std::mutex> lk(network_mtx);
 
-	server.send_text(msg);
+	server.send_text(msg.data());
 }
 
 
@@ -197,10 +198,13 @@ void run_client()
 
 		if (strcmp(m, CLIENT_DISCONNECT_FLAG) == 0)
 		{
-			disconnect = true;
+			print_line("client disconnecting");
+			client.disconnect();
 		}
 		else if (strcmp(m, STOP_FLAG) == 0)
 		{
+			print_line("stopping client");
+			client.disconnect();
 			stop = true;
 		}
 	};
@@ -230,17 +234,6 @@ void run_client()
 		{
 			read_console(message_buffer);
 			client_send(client, message_buffer.data());
-
-			if (disconnect)
-			{
-				print_line("client disconnecting");
-				client.disconnect();
-			}
-			else if (stop)
-			{
-				print_line("stopping client");
-				client.disconnect();
-			}
 
 			if (client.is_connected())
 			{

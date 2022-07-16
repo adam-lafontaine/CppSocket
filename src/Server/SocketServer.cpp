@@ -87,11 +87,11 @@ bool SocketServer::is_connected()
 }
 
 
-void SocketServer::send_text(std::string const& message)
+void SocketServer::send_text(cstring message)
 {
 	auto socket = m_server->client_socket;
-	auto buffer = message.data();
-	auto length = (int)message.size();
+	auto buffer = message;
+	auto length = (int)BUFFER_SIZE;
 
 	bool result = os_socket_send_buffer(socket, buffer, length);
 

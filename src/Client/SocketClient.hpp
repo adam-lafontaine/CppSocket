@@ -1,7 +1,6 @@
 #pragma once
 
 #include <functional>
-#include <string>
 
 
 using cstring = const char*;
@@ -35,7 +34,7 @@ public:
 
 	bool is_connected();
 
-	void send_text(std::string const& message);
+	void send_text(cstring message);
 
 	void receive_text();
 

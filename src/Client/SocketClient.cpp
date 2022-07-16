@@ -66,10 +66,10 @@ bool SocketClient::is_connected()
 }
 
 
-void SocketClient::send_text(std::string const& message)
+void SocketClient::send_text(cstring message)
 {
 	auto socket = m_client->client_socket;
-	auto buffer = message.data();
+	auto buffer = message;
 	auto length = (int)BUFFER_SIZE;
 
 	bool result = os_socket_send_buffer(socket, buffer, length);
