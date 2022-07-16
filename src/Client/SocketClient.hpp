@@ -1,73 +1,44 @@
-#if defined(_WIN32)
 #pragma once
-#endif
 
-#include <string>
-#include <vector>
+#include <functional>
 
-namespace SocketLib
+
+using cstring = const char*;
+
+
+class ClientSocketInfo;
+
+
+class SocketClient
 {
-    struct ClientSocketInfo;
+private:
+	using client_ptr_t = ClientSocketInfo*;
 
-    class SocketClient
-	{
-    private:
-		using socket_info_t = ClientSocketInfo;
+	client_ptr_t m_client = nullptr;
 
-		socket_info_t* m_socket_info = nullptr;
+	static constexpr size_t BUFFER_SIZE = 50;
 
-        static int constexpr MAX_CHARS = 256;
 
-		unsigned short const DEFAULT_PORT = 27015;        
-		const char* DEFAULT_IP_ADDRESS = "127.0.0.1";
+public:
+	SocketClient();
 
-		const char* m_srv_ip = DEFAULT_IP_ADDRESS;
-        unsigned short m_srv_port_no = DEFAULT_PORT;
+	~SocketClient();
 
-		std::string m_status = "";
+	bool open(cstring ip_address, int port);
 
-		std::vector<std::string> m_errors;
+	bool connect();
 
-        bool init();
-		bool connect_socket();		
-		void close_socket();
+	void disconnect();
 
-		void create_socket_info();
-		void destroy_socket_info();
+	bool is_open();
 
-	public:
+	bool is_connected();
 
-		SocketClient() {}
+	void send_text(cstring message);
 
-		SocketClient(const char* ip, unsigned short srv_port)
-		{
-			m_srv_ip = ip;
-			m_srv_port_no = srv_port;
-		}
+	void receive_text();
 
-		SocketClient(std::string const& ip, unsigned short srv_port)
-		{
-			m_srv_ip = ip.c_str();
-			m_srv_port_no = srv_port;
-		}
+	std::function<void(bool, cstring)> on_send;
 
-		~SocketClient()
-		{ 
-			close_socket();
-			destroy_socket_info();
-		}
-
-		void start();
-		void stop();
-		bool send_text(std::string const& text);
-		std::string receive_text();
-		std::string status() { return m_status; }
-		
-		
-		bool running();
-		bool connected();
-
-		bool has_error() { return !m_errors.empty(); }
-        std::string latest_error();
-    };
-}
+	std::function<void(bool, cstring)> on_receive;
+};
