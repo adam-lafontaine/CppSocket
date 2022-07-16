@@ -1,5 +1,6 @@
 #include "../Server/SocketServer.hpp"
 #include "../Client/SocketClient.hpp"
+#include "win32_leak_check.h"
 
 #include <iostream>
 #include <thread>
@@ -8,6 +9,8 @@
 #include <string>
 
 #if defined(_WIN32)
+
+#include "win32_leak_check.h"
 
 #define sprintf sprintf_s
 
@@ -255,6 +258,14 @@ void run_client()
 
 int main()
 {
+#if defined(_WIN32) && defined(_DEBUG)
+	int dbgFlags = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
+	dbgFlags |= _CRTDBG_CHECK_ALWAYS_DF;   // check block integrity
+	dbgFlags |= _CRTDBG_DELAY_FREE_MEM_DF; // don't recycle memory
+	dbgFlags |= _CRTDBG_LEAK_CHECK_DF;     // leak report on exit
+	_CrtSetDbgFlag(dbgFlags);
+#endif
+
 	std::thread t_server(run_server);
 	std::thread t_client(run_client);
 

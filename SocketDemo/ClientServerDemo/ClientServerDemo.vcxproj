@@ -128,6 +128,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Client\SocketClient.hpp" />
+    <ClInclude Include="..\..\src\Launcher\win32_leak_check.h" />
     <ClInclude Include="..\..\src\os_socket\os_socket_client.hpp" />
     <ClInclude Include="..\..\src\os_socket\os_socket_include.hpp" />
     <ClInclude Include="..\..\src\os_socket\os_socket_server.hpp" />
