@@ -47,19 +47,19 @@ bool SocketServer::open(int port)
 
 bool SocketServer::start()
 {
-	return os_server_listen(*m_server);
+	return m_server != nullptr && os_server_listen(*m_server);
 }
 
 
 bool SocketServer::connect()
 {
-	return os_server_accept(*m_server);
+	return m_server != nullptr && os_server_accept(*m_server);
 }
 
 
 void SocketServer::disconnect()
 {
-	return os_server_disconnect(*m_server);
+	os_server_disconnect(*m_server);
 }
 
 

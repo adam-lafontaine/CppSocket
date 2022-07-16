@@ -45,7 +45,7 @@ static inline bool os_socket_init()
 }
 
 
-bool os_socket_create(socket_t& socket_handle)
+static inline bool os_socket_create(socket_t& socket_handle)
 {
 	socket_handle = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 

@@ -127,11 +127,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\Client\SocketClient.hpp" />
+    <ClInclude Include="..\..\src\os_socket\os_socket_client.hpp" />
     <ClInclude Include="..\..\src\os_socket\os_socket_include.hpp" />
     <ClInclude Include="..\..\src\os_socket\os_socket_server.hpp" />
     <ClInclude Include="..\..\src\Server\SocketServer.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\Client\SocketClient.cpp" />
     <ClCompile Include="..\..\src\Launcher\launcher_main.cpp" />
     <ClCompile Include="..\..\src\Server\SocketServer.cpp" />
   </ItemGroup>
